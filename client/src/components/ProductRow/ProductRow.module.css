@@ -1,0 +1,6 @@
+.row{margin:2rem 0}
+.heading{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1rem}
+.heading h2{font-size:1.4rem;color:var(--dark);margin:0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem}
+
+@media(max-width:768px){.heading{flex-direction:column;align-items:flex-start}}

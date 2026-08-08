@@ -1,0 +1,9 @@
+.home{background:var(--background);min-height:100vh}
+.hero{background:linear-gradient(90deg,var(--secondary),rgba(35,47,62,0.7));color:var(--white);padding:2rem 0;margin-bottom:1rem}
+.heroInner{display:flex;gap:2rem;align-items:center;justify-content:space-between}
+.heroInner h1{font-size:1.8rem;margin:0}
+.heroInner img{max-width:480px;border-radius:8px}
+
+section h2{font-size:1.4rem;margin:8px 0 12px 0}
+
+@media(max-width:768px){.heroInner{flex-direction:column;text-align:center}.heroInner img{max-width:100%}}

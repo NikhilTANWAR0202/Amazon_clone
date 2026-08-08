@@ -1,0 +1,31 @@
+.banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  margin: 0;
+  background-color: #232f3e;
+  color: white;
+  overflow-x: auto;
+  min-height: 44px;
+}
+
+.menuToggle {
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+  font-weight: 700;
+}
+
+.link {
+  color: #ddd;
+  text-decoration: none;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.link:hover {
+  color: white;
+}

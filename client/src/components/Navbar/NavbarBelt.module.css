@@ -1,0 +1,144 @@
+.navbelt {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 60px;
+  padding: 0 12px;
+  width: 100%;
+  background-color: #131921;
+  color: white;
+}
+
+.logo {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+  margin-right: 8px;
+}
+
+.logoImg {
+  height: 34px;
+  width: auto;
+  display: block;
+}
+
+.location {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.7rem;
+  color: #ddd;
+  line-height: 1.1;
+}
+
+.searchWrapper {
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-width: 260px;
+  max-width: 640px;
+}
+
+.searchForm {
+  display: flex;
+  flex: 1;
+  height: 40px;
+  background-color: white;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.searchForm input {
+  flex: 1;
+  border: none;
+  padding: 0 12px;
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+.searchForm input:focus {
+  outline: 2px solid #f90;
+}
+
+.searchForm button {
+  background-color: #febd69;
+  border: none;
+  padding: 0 14px;
+  color: #131921;
+  cursor: pointer;
+}
+
+.suggestionsPanel {
+  position: absolute;
+  top: 44px;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-top: none;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+  z-index: 20;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.suggestionItem {
+  width: 100%;
+  text-align: left;
+  padding: 10px 14px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 0.92rem;
+  color: #111;
+}
+
+.suggestionItem:hover {
+  background: #f7f7f7;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.actionItem {
+  display: flex;
+  flex-direction: column;
+  color: white;
+  font-size: 0.75rem;
+  line-height: 1.1;
+}
+
+.actionItem a {
+  color: white;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.cartLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: white;
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.cartCount {
+  background: #f08804;
+  color: #111;
+  padding: 2px 6px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+}
+
+.logoutButton {
+  background: #febd69;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-weight: 700;
+  cursor: pointer;
+}
