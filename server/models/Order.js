@@ -18,6 +18,20 @@ const orderSchema = new mongoose.Schema({
   discount: { type: Number, default: 0 },
   total: { type: Number, required: true },
   status: { type: String, default: 'Placed' },
+  paymentStatus: {
+    type: String,
+    enum: ['Pending', 'Paid', 'Failed'],
+    default: 'Pending'
+  },
+  paymentInfo: {
+    paymentId: { type: String },
+    orderId: { type: String },
+    signature: { type: String },
+    method: { type: String },
+    status: { type: String }
+  },
+  razorpayOrderId: { type: String },
+  razorpayPaymentId: { type: String },
   paymentMethod: { type: String, required: true },
   orderId: { type: String, required: true, unique: true },
   createdAt: { type: Date, default: Date.now }

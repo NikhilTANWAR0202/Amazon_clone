@@ -1,106 +1,166 @@
-import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Fragment, useEffect, useState } from 'react'
 import api from '../../services/api'
-import { formatCurrency } from '../../utils/currency'
-import styles from './AdminPanel.module.css'
+import styles from './Admin.module.css'
+import Navbar from './Navbar'
+import Sidebar from './Sidebar'
 
-const statuses = ['Placed', 'Confirmed', 'Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled']
-
-export default function AdminOrders() {
+function AdminOrders() {
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [success, setSuccess] = useState('')
+  const [expandedOrders, setExpandedOrders] = useState([])
 
   useEffect(() => {
-    const loadOrders = async () => {
-      try {
-        const res = await api.get('/admin/orders')
-        setOrders(res.data.orders)
-      } catch (err) {
-        setError(err.response?.data?.message || 'Unable to load orders')
-      } finally {
-        setLoading(false)
-      }
-    }
-    loadOrders()
+    fetchOrders()
   }, [])
 
-  const refreshOrders = async () => {
+  function toggleDetails(orderId) {
+    setExpandedOrders((current) =>
+      current.includes(orderId) ? current.filter((id) => id !== orderId) : [...current, orderId]
+    )
+  }
+
+  async function fetchOrders() {
+    setLoading(true)
+    setError('')
+
     try {
       const res = await api.get('/admin/orders')
-      setOrders(res.data.orders)
+      setOrders(res.data.orders || [])
     } catch (err) {
-      setError(err.response?.data?.message || 'Unable to reload orders')
+      setError('Unable to load orders.')
+    } finally {
+      setLoading(false)
     }
   }
 
-  const handleStatusChange = async (orderId, status) => {
-    setError('')
-    setSuccess('')
-    try {
-      const res = await api.put(`/admin/orders/${orderId}`, { status })
-      setOrders((current) => current.map((order) => order._id === orderId ? res.data.order : order))
-      setSuccess(`Order ${res.data.order.orderId} updated to ${status}.`)
-    } catch (err) {
-      setError(err.response?.data?.message || 'Unable to update order status')
+  async function deleteOrder(id) {
+    if (!window.confirm('Are you sure you want to delete this order?')) {
+      return
     }
-  }
 
-  const handleDeleteOrder = async (orderId) => {
-    if (!window.confirm('Delete this order?')) return
-    setError('')
-    setSuccess('')
     try {
-      await api.delete(`/admin/orders/${orderId}`)
-      setOrders((current) => current.filter((order) => order._id !== orderId))
-      setSuccess('Order deleted successfully.')
+      await api.delete(`/admin/orders/${id}`)
+      await fetchOrders()
     } catch (err) {
+      console.error(err)
       setError(err.response?.data?.message || 'Unable to delete order')
     }
   }
 
-  if (loading) return <div className="container"><h2>Admin orders</h2><p>Loading orders...</p></div>
-  if (error) return <div className="container"><h2>Admin orders</h2><p>{error}</p></div>
+  async function updateStatus(id, status) {
+    try {
+      await api.put(`/admin/orders/${id}/status`, { status })
+      await fetchOrders()
+    } catch (err) {
+      console.error(err)
+      setError('Unable to update order status')
+    }
+  }
 
   return (
-    <div className="container" style={{ maxWidth: 1100 }}>
-      <div className={styles.adminNav}>
-        <Link to="/admin" className={styles.adminNavLink}>Dashboard</Link>
-        <Link to="/admin/users" className={styles.adminNavLink}>Users</Link>
-        <Link to="/admin/orders" className={styles.adminNavLink}>Orders</Link>
-      </div>
-      <h2>Admin orders</h2>
-      {success && <div className={styles.successBanner}>{success}</div>}
-      <div className={styles.card}>
-        <div className={styles.rowHeader}>
-          <span>Order</span>
-          <span>User</span>
-          <span>Total</span>
-          <span>Status</span>
-          <span>Action</span>
-        </div>
-        {orders.map((order) => (
-          <div key={order._id} className={styles.row}>
-            <span>{order.orderId}</span>
-            <span>{order.user?.email || 'Unknown'}</span>
-            <span>{formatCurrency(order.total)}</span>
-            <span>
-              <select
-                value={order.status}
-                onChange={(e) => handleStatusChange(order._id, e.target.value)}
-              >
-                {statuses.map((status) => (
-                  <option key={status} value={status}>{status}</option>
-                ))}
-              </select>
-            </span>
-            <span className={styles.rowActions}>
-              <button type="button" onClick={() => handleDeleteOrder(order._id)} className={styles.dangerButton}>Delete</button>
-            </span>
+    <div className={styles.adminShell}>
+      <Sidebar />
+
+      <div className={styles.adminContent}>
+        <Navbar />
+
+        <div className={styles.adminMain}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px', alignItems: 'flex-start' }}>
+            <div>
+              <h1 className={styles.adminTitle}>Manage Orders</h1>
+              <p className={styles.adminSubtitle}>Review and update order status across the store.</p>
+            </div>
           </div>
-        ))}
+
+          {error && <div className={styles.alert}>{error}</div>}
+
+          <div className={styles.adminTableWrapper}>
+            {loading ? (
+              <div className={styles.loadingBlock}>Loading orders…</div>
+            ) : orders.length === 0 ? (
+              <div className={styles.emptyState}>No orders found.</div>
+            ) : (
+              <table className={styles.adminTable}>
+                <thead>
+                  <tr>
+                    <th>Customer</th>
+                    <th>Total</th>
+                    <th>Payment</th>
+                    <th>Status</th>
+                    <th>Items</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {orders.map((order) => (
+                    <Fragment key={order._id}>
+                      <tr>
+                        <td>
+                          <div style={{ display: 'grid', gap: '4px' }}>
+                            <span style={{ fontWeight: 700 }}>{order.user ? `${order.user.firstName || ''} ${order.user.lastName || ''}`.trim() || 'Guest' : 'Guest'}</span>
+                            <span style={{ color: '#6b7280', fontSize: '0.92rem' }}>{order.user?.email || 'guest@example.com'}</span>
+                          </div>
+                        </td>
+                        <td>₹ {Number(order.totalPrice ?? order.total ?? 0).toLocaleString('en-IN')}</td>
+                        <td>{order.paymentMethod || 'N/A'}</td>
+                        <td>
+                          <span className={`${styles.badge} ${order.status === 'Delivered' ? styles.badgeSuccess : order.status === 'Cancelled' ? styles.badgeDanger : order.status === 'Pending' ? styles.badgeWarning : styles.badgePrimary}`}>
+                            {order.status}
+                          </span>
+                        </td>
+                        <td>{order.items?.length ?? 0}</td>
+                        <td>
+                          <div className={styles.tableActions} style={{ justifyContent: 'flex-end' }}>
+                            <select className={styles.formGroup} value={order.status} onChange={(e) => updateStatus(order._id, e.target.value)}>
+                              <option value="Pending">Pending</option>
+                              <option value="Processing">Processing</option>
+                              <option value="Shipped">Shipped</option>
+                              <option value="Delivered">Delivered</option>
+                              <option value="Cancelled">Cancelled</option>
+                            </select>
+                            <button className={`${styles.button} ${styles.buttonSecondary}`} onClick={() => toggleDetails(order._id)}>
+                              {expandedOrders.includes(order._id) ? 'Hide items' : 'Show items'}
+                            </button>
+                            <button className={`${styles.button} ${styles.buttonDanger}`} onClick={() => deleteOrder(order._id)}>
+                              Delete
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                      {expandedOrders.includes(order._id) && (
+                        <tr className={styles.orderDetailsRow}>
+                          <td colSpan="6">
+                            <div className={styles.orderDetails}>
+                              <div style={{ marginBottom: '14px', display: 'flex', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
+                                <div><strong>Order ID:</strong> {order.orderId || order._id}</div>
+                                <div><strong>Created:</strong> {new Date(order.createdAt).toLocaleString('en-IN')}</div>
+                              </div>
+                              <div style={{ display: 'grid', gap: '10px' }}>
+                                {order.items?.map((item, index) => (
+                                  <div className={styles.orderItem} key={`${order._id}-item-${index}`}>
+                                    <div>
+                                      <div style={{ fontWeight: 700 }}>{item.title}</div>
+                                      <div style={{ color: '#6b7280', fontSize: '0.94rem' }}>{item.quantity} × ₹ {Number(item.price).toLocaleString('en-IN')}</div>
+                                    </div>
+                                    <div style={{ fontWeight: 700 }}>₹ {(item.quantity * item.price).toLocaleString('en-IN')}</div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </Fragment>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   )
 }
+
+                        export default AdminOrders;

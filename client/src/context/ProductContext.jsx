@@ -13,17 +13,24 @@ export const ProductProvider = ({ children }) => {
     const controller = new AbortController()
     const loadProducts = async () => {
       try {
+        setLoading(true)
         const response = await api.get('/products', { signal: controller.signal })
         const items = (response.data.products || []).map((product) => ({
           ...product,
           id: product._id,
-          oldPrice: product.oldPrice ?? Math.round(product.price / (1 - (product.discountPercentage || 0) / 100)),
-          prime: product.stock > 40 || product.rating >= 4.4,
-          deliveryDays: product.deliveryDays ?? Math.max(1, Math.min(5, Math.round(2 + (100 - (product.stock || 0)) / 30)))
+          oldPrice:
+            product.oldPrice ?? Math.round(product.price / (1 - (product.discountPercentage || product.discount || 0) / 100)),
+          discountPercentage: product.discountPercentage ?? product.discount ?? 0,
+          prime: product.prime ?? (product.stock > 40 || product.rating >= 4.4),
+          deliveryDays:
+            product.deliveryDays ?? Math.max(1, Math.min(5, Math.round(2 + (100 - (product.stock || 0)) / 30)))
         }))
-        setProducts(items)
-        setCategories(Array.from(new Set(items.map((product) => product.category))).sort())
-        setBrands(Array.from(new Set(items.map((product) => product.brand))).sort())
+
+        if (items.length) {
+          setProducts(items)
+          setCategories(Array.from(new Set(items.map((product) => product.category))).sort())
+          setBrands(Array.from(new Set(items.map((product) => product.brand))).sort())
+        }
       } catch (error) {
         console.error('Product load failed', error)
       } finally {
@@ -35,9 +42,13 @@ export const ProductProvider = ({ children }) => {
     return () => controller.abort()
   }, [])
 
-  const getProductById = (id) => products.find((product) => String(product.id) === String(id) || String(product._id) === String(id))
+  const getProductById = (id) =>
+    products.find(
+      (product) => String(product.id) === String(id) || String(product._id) === String(id)
+    )
 
-  const getProductsByCategory = (category) => products.filter((product) => product.category === category)
+  const getProductsByCategory = (category) =>
+    products.filter((product) => product.category === category)
 
   const getProductsByBrand = (brand) => products.filter((product) => product.brand === brand)
 
@@ -48,7 +59,16 @@ export const ProductProvider = ({ children }) => {
 
   return (
     <ProductContext.Provider
-      value={{ products, categories, brands, loading, getProductById, getProductsByCategory, getProductsByBrand, topRated }}
+      value={{
+        products,
+        categories,
+        brands,
+        loading,
+        getProductById,
+        getProductsByCategory,
+        getProductsByBrand,
+        topRated
+      }}
     >
       {children}
     </ProductContext.Provider>

@@ -1,0 +1,5 @@
+A  .gitignore
+ m client
+ m node_modules/amazon-clone-client
+ m temp-backend
+?? status_after_add.txt

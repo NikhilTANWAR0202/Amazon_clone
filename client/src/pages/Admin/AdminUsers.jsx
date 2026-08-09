@@ -1,77 +1,147 @@
-import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
 import api from '../../services/api'
-import styles from './AdminPanel.module.css'
+import styles from './Admin.module.css'
+import Navbar from './Navbar'
+import Sidebar from './Sidebar'
 
 export default function AdminUsers() {
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [search, setSearch] = useState('')
 
   useEffect(() => {
-    const loadUsers = async () => {
-      try {
-        const res = await api.get('/admin/users')
-        setUsers(res.data.users)
-      } catch (err) {
-        setError(err.response?.data?.message || 'Unable to load users')
-      } finally {
-        setLoading(false)
-      }
-    }
-    loadUsers()
+    fetchUsers()
   }, [])
 
-  const handleRoleChange = async (id, role) => {
+  async function fetchUsers() {
+    setLoading(true)
+    setError('')
     try {
-      const res = await api.put(`/admin/users/${id}/role`, { role })
-      setUsers((current) => current.map((user) => user._id === id ? res.data.user : user))
+      const res = await api.get('/admin/users')
+      setUsers(res.data.users || [])
     } catch (err) {
-      setError(err.response?.data?.message || 'Unable to update role')
+      setError('Unable to load users.')
+    } finally {
+      setLoading(false)
     }
   }
 
-  const handleDelete = async (id) => {
+  async function handleRoleChange(user) {
+    setError('')
     try {
-      await api.delete(`/admin/users/${id}`)
-      setUsers((current) => current.filter((user) => user._id !== id))
+      const nextRole = user.role === 'admin' ? 'user' : 'admin'
+      await api.put(`/admin/users/${user._id}/role`, { role: nextRole })
+      fetchUsers()
     } catch (err) {
-      setError(err.response?.data?.message || 'Unable to delete user')
+      setError(err.response?.data?.message || 'Unable to update role.')
     }
   }
 
-  if (loading) return <div className="container"><h2>Admin users</h2><p>Loading users...</p></div>
-  if (error) return <div className="container"><h2>Admin users</h2><p>{error}</p></div>
+  async function handleDelete(userId) {
+    const confirm = window.confirm('Delete this user account?')
+    if (!confirm) return
+    try {
+      await api.delete(`/admin/users/${userId}`)
+      fetchUsers()
+    } catch (err) {
+      setError(err.response?.data?.message || 'Unable to delete user.')
+    }
+  }
+
+  const filteredUsers = useMemo(() => {
+    return users.filter((user) => {
+      const value = search.toLowerCase()
+      return (
+        user.firstName?.toLowerCase().includes(value) ||
+        user.lastName?.toLowerCase().includes(value) ||
+        user.email?.toLowerCase().includes(value) ||
+        user.role?.toLowerCase().includes(value)
+      )
+    })
+  }, [users, search])
 
   return (
-    <div className="container" style={{ maxWidth: 1100 }}>
-      <div className={styles.adminNav}>
-        <Link to="/admin" className={styles.adminNavLink}>Dashboard</Link>
-        <Link to="/admin/users" className={styles.adminNavLink}>Users</Link>
-        <Link to="/admin/orders" className={styles.adminNavLink}>Orders</Link>
-      </div>
-      <h2>Admin users</h2>
-      <div className={styles.card}>
-        <div className={styles.rowHeader}>
-          <span>Name</span>
-          <span>Email</span>
-          <span>Role</span>
-          <span>Actions</span>
-        </div>
-        {users.map((user) => (
-          <div key={user._id} className={styles.row}>
-            <span>{user.firstName} {user.lastName}</span>
-            <span>{user.email}</span>
-            <span>{user.role}</span>
-            <span className={styles.rowActions}>
-              <select value={user.role} onChange={(e) => handleRoleChange(user._id, e.target.value)}>
-                <option value="user">user</option>
-                <option value="admin">admin</option>
-              </select>
-              <button type="button" onClick={() => handleDelete(user._id)} className={styles.dangerButton}>Delete</button>
-            </span>
+    <div className={styles.adminShell}>
+      <Sidebar />
+
+      <div className={styles.adminContent}>
+        <Navbar />
+
+        <div className={styles.adminMain}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '18px', flexWrap: 'wrap' }}>
+            <div>
+              <h1 className={styles.adminTitle}>User management</h1>
+              <p className={styles.adminSubtitle}>All registered customers and administrators are listed here.</p>
+            </div>
+            <div className={styles.metaCard}>
+              <div style={{ fontSize: '0.85rem', color: '#475569' }}>Total users</div>
+              <div style={{ fontSize: '1.75rem', fontWeight: 700 }}>{users.length}</div>
+            </div>
           </div>
-        ))}
+
+          {error && <div className={styles.alert}>{error}</div>}
+
+          <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'space-between', gap: '14px', flexWrap: 'wrap' }}>
+            <input
+              style={{ flex: '1 1 320px', padding: '14px 16px', borderRadius: '14px', border: '1px solid #d1d5db', background: '#fff' }}
+              placeholder="Search users by email, name or role"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+
+          <div className={styles.adminTableWrapper}>
+            {loading ? (
+              <div className={styles.loadingBlock}>Loading users…</div>
+            ) : filteredUsers.length === 0 ? (
+              <div className={styles.emptyState} style={{ marginTop: '24px' }}>
+                No users found. Try a different search term or refresh the page.
+              </div>
+            ) : (
+              <table className={styles.adminTable}>
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredUsers.map((user) => (
+                    <tr key={user._id}>
+                      <td>
+                        <div style={{ display: 'grid', gap: '4px' }}>
+                          <span style={{ fontWeight: 700 }}>{user.firstName} {user.lastName}</span>
+                          <span style={{ color: '#6b7280', fontSize: '0.92rem' }}>{user.phone || 'No phone'}</span>
+                        </div>
+                      </td>
+                      <td>{user.email}</td>
+                      <td>
+                        <span className={`${styles.badge} ${user.role === 'admin' ? styles.badgeAdmin : styles.badgePrimary}`}>
+                          {user.role}
+                        </span>
+                      </td>
+                      <td>{new Date(user.createdAt).toLocaleDateString('en-IN')}</td>
+                      <td>
+                        <div className={styles.tableActions}>
+                          <button className={`${styles.button} ${styles.buttonSecondary}`} onClick={() => handleRoleChange(user)}>
+                            {user.role === 'admin' ? 'Demote' : 'Promote'}
+                          </button>
+                          <button className={`${styles.button} ${styles.buttonDanger}`} onClick={() => handleDelete(user._id)}>
+                            Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   )

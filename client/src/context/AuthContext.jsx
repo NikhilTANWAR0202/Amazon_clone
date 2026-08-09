@@ -23,40 +23,50 @@ export const AuthProvider = ({ children }) => {
     fetchProfile()
   }, [])
 
+  // Normal user login
   const login = async (values) => {
     const res = await api.post('/auth/login', values)
+
     if (res.data.token) {
       localStorage.setItem('token', res.data.token)
     }
+
     setUser(res.data.user)
     return res.data
   }
-  const adminLogin = async (values) => {
-  const res = await api.post('/auth/admin/login', values);
 
-  if (res.data.token) {
-    localStorage.setItem('token', res.data.token);
+  // Admin login
+  const adminLogin = async (values) => {
+    const res = await api.post('/auth/admin/login', values)
+
+    if (res.data.token) {
+      localStorage.setItem('token', res.data.token)
+    }
+
+    setUser(res.data.user)
+    return res.data
   }
 
-  setUser(res.data.user);
-  return res.data;
-};
-
+  // Register
   const register = async (values) => {
     const res = await api.post('/auth/register', values)
+
     if (res.data.token) {
       localStorage.setItem('token', res.data.token)
     }
+
     setUser(res.data.user)
     return res.data
   }
 
+  // Update profile
   const updateProfile = async (values) => {
     const res = await api.put('/auth/profile', values)
     setUser(res.data.user)
     return res.data
   }
 
+  // Logout
   const logout = async () => {
     await api.post('/auth/logout')
     localStorage.removeItem('token')
@@ -64,19 +74,20 @@ export const AuthProvider = ({ children }) => {
   }
 
   return (
-<AuthContext.Provider
-  value={{
-    user,
-    loading,
-    login,
-    adminLogin,
-    register,
-    logout,
-    fetchProfile,
-    updateProfile,
-    setUser
-  }}
->      {children}
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        login,
+        adminLogin,
+        register,
+        logout,
+        fetchProfile,
+        updateProfile,
+        setUser
+      }}
+    >
+      {children}
     </AuthContext.Provider>
   )
 }

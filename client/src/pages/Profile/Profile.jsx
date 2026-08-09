@@ -1,5 +1,6 @@
 
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import styles from './Profile.module.css'
 
@@ -77,22 +78,22 @@ export default function Profile(){
             </form>
           </div>
           <div className={styles.profileMenu}>
-            <div className={styles.menuItem}>
+            <Link to="/profile/orders" className={styles.menuItem}>
               <h3>Orders</h3>
               <p>Track, return, or buy things again.</p>
-            </div>
-            <div className={styles.menuItem}>
+            </Link>
+            <Link to="/profile/security" className={styles.menuItem}>
               <h3>Login & security</h3>
               <p>Edit login, name, and mobile number.</p>
-            </div>
-            <div className={styles.menuItem}>
+            </Link>
+            <Link to="/profile/addresses" className={styles.menuItem}>
               <h3>Your addresses</h3>
               <p>Edit addresses for orders and gifts.</p>
-            </div>
-            <div className={styles.menuItem}>
+            </Link>
+            <Link to="/profile/payments" className={styles.menuItem}>
               <h3>Payment options</h3>
               <p>Edit or add payment methods.</p>
-            </div>
+            </Link>
           </div>
         </div>
       </div>

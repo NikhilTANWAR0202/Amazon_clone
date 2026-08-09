@@ -14,6 +14,8 @@ function ProductCard({ product }) {
   const { addToCart } = useCart()
   const { toggle, isIn } = useWishlist()
 
+  const productId = product.id || product._id
+
   return (
     <>
       <motion.div
@@ -21,10 +23,10 @@ function ProductCard({ product }) {
         whileHover={{ y: -6, scale: 1.01 }}
         transition={{ duration: 0.2 }}
       >
-        <Link to={`/product/${product.id}`} className={styles.imageWrap}>
+        <Link to={`/product/${productId}`} className={styles.imageWrap}>
           <img
-            src={product.images?.[0]}
-            alt={product.title}
+            src={product.images?.[0] || product.image || product.thumbnail || '/images/placeholder.jpg'}
+            alt={product.title || product.name}
             className={styles.image}
           />
         </Link>
@@ -50,11 +52,11 @@ function ProductCard({ product }) {
               </span>
             )}
 
-            {product.discountPercentage && (
-  <span className={styles.discount}>
-    {Math.round(product.discountPercentage)}% OFF
-  </span>
-)}
+            {(product.discountPercentage || product.discount) && (
+              <span className={styles.discount}>
+                {Math.round(product.discountPercentage ?? product.discount)}% OFF
+              </span>
+            )}
           </div>
 
           <div className={styles.actions}>

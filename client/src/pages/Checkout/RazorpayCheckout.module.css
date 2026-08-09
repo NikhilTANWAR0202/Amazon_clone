@@ -1,0 +1,29 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.error {
+  color: #b91c1c;
+  background: #fee2e2;
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  font-size: 0.95rem;
+}
+
+.razorpayBtn {
+  background: #2d8617;
+  color: white;
+  border: none;
+  padding: 0.9rem 1.25rem;
+  border-radius: 0.75rem;
+  cursor: pointer;
+  width: 100%;
+  font-weight: 600;
+}
+
+.razorpayBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

@@ -47,7 +47,7 @@ const validateAddress = (address) => {
 
 export const createOrder = async (req,res)=>{
   try {
-    const { items, address, payment, shippingCost, gst, discount = 0, total, paymentMethod } = req.body
+    const { items, address, payment, paymentInfo, shippingCost, gst, discount = 0, total, paymentMethod, paymentStatus, razorpayOrderId, razorpayPaymentId } = req.body
 
     const normalizedItems = normalizeItems(items)
     if (!normalizedItems) {
@@ -94,16 +94,28 @@ export const createOrder = async (req,res)=>{
       await Product.findByIdAndUpdate(item.productId, { $inc: { stock: -item.quantity } }, { new: true })
     }
 
+    const computedPaymentInfo = paymentInfo || (payment?.razorpayPaymentId ? {
+      paymentId: payment.razorpayPaymentId,
+      orderId: payment.razorpayOrderId,
+      signature: payment.razorpaySignature,
+      method: 'Razorpay',
+      status: paymentStatus || 'Paid'
+    } : undefined)
+
     const order = await Order.create({
       user: req.user._id,
       items: normalizedItems,
       address,
       payment: payment || {},
+      paymentInfo: computedPaymentInfo,
       shippingCost,
       gst,
       discount,
       total,
       paymentMethod: paymentMethodString,
+      paymentStatus: paymentStatus || 'Pending',
+      razorpayOrderId: razorpayOrderId || undefined,
+      razorpayPaymentId: razorpayPaymentId || undefined,
       orderId
     })
 

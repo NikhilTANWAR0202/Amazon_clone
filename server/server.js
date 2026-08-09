@@ -12,6 +12,7 @@ import adminRoutes from './routes/adminRoutes.js'
 import authRoutes from './routes/authRoutes.js'
 import cartRoutes from './routes/cartRoutes.js'
 import orderRoutes from './routes/orderRoutes.js'
+import paymentRoutes from './routes/paymentRoutes.js'
 import productRoutes from './routes/productRoutes.js'
 import userRoutes from './routes/userRoutes.js'
 
@@ -47,6 +48,8 @@ app.use('/api/products', productRoutes)
 app.use('/api/cart', cartRoutes)
 app.use('/api/admin', adminRoutes)
 app.use('/api/users', userRoutes)
+app.use('/api/payment', paymentRoutes)
+app.use('/api/payments', paymentRoutes)
 app.use('/api/orders', orderRoutes)
 
 const clientDistPath = path.join(__dirname, '../client/dist')
@@ -62,6 +65,8 @@ if (process.env.NODE_ENV === 'production') {
 app.use(notFound)
 app.use(errorHandler)
 
-mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(()=> app.listen(port, ()=> console.log(`Server listening on port ${port}`)))
-  .catch(err=> console.error('MongoDB connect error', err))
+const mongoUri = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/amazon_clone'
+
+mongoose.connect(mongoUri, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => app.listen(port, () => console.log(`Server listening on port ${port}`)))
+  .catch((err) => console.error('MongoDB connect error', err))

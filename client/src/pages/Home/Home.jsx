@@ -7,8 +7,7 @@ import { ProductContext } from '../../context/ProductContext'
 import styles from './Home.module.css'
 
 export default function Home(){
-  const {products, loading} = useContext(ProductContext)
-  const topProducts = products.slice(0,12)
+  const { products, loading, topRated } = useContext(ProductContext)
 
   return (
     <div className={styles.home}>
@@ -22,7 +21,12 @@ export default function Home(){
 
         <section style={{marginTop:28}}>
           <h2>Trending Products</h2>
-          {loading ? <p>Loading...</p> : <ProductGrid products={topProducts} />}
+          {loading ? <p>Loading...</p> : <ProductGrid products={topRated} />}
+        </section>
+
+        <section style={{marginTop:28}}>
+          <h2>Browse All Products</h2>
+          {loading ? <p>Loading...</p> : <ProductGrid products={products} />}
         </section>
 
         <section style={{marginTop:28}}>

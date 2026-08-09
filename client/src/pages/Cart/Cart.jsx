@@ -1,12 +1,14 @@
 
 import { useNavigate } from 'react-router-dom'
 import { useCart } from '../../context/CartContext'
+import { useWishlist } from '../../context/WishlistContext'
 import { formatCurrency } from '../../utils/currency'
 import styles from './Cart.module.css'
 
 export default function Cart(){
   const navigate = useNavigate()
   const { cart, removeFromCart, updateQty, clearCart } = useCart()
+  const { add, isIn } = useWishlist()
 
   const subtotal = cart.items.reduce((s,i)=> s + i.price * i.qty, 0)
   const gst = +(subtotal * 0.18).toFixed(2)
@@ -50,7 +52,16 @@ export default function Cart(){
                         <button className={styles.qtyButton} onClick={() => updateQty(item.id, item.qty + 1)}>+</button>
                       </div>
                       <button className={styles.actionButton} onClick={() => removeFromCart(item.id)}>Delete</button>
-                      <button className={styles.actionButton}>Save for later</button>
+                      <button
+                        className={styles.actionButton}
+                        onClick={() => {
+                          add(item)
+                          removeFromCart(item.id)
+                        }}
+                        disabled={isIn(item.id)}
+                      >
+                        {isIn(item.id) ? 'Saved for later' : 'Save for later'}
+                      </button>
                     </div>
                   </div>
                   <div className={styles.itemPriceBlock}>

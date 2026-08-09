@@ -1,5 +1,32 @@
 import Order from '../models/Order.js'
+import Product from '../models/Product.js'
 import User from '../models/User.js'
+
+export const getStats = async (req, res) => {
+  const [totalRevenueResult, totalUsers, totalProducts, outOfStockProducts, pendingOrders, deliveredOrders, totalOrders] = await Promise.all([
+    Order.aggregate([{ $group: { _id: null, totalRevenue: { $sum: '$total' } } }]),
+    User.countDocuments(),
+    Product.countDocuments(),
+    Product.countDocuments({ stock: 0 }),
+    Order.countDocuments({ status: 'Pending' }),
+    Order.countDocuments({ status: 'Delivered' }),
+    Order.countDocuments()
+  ])
+
+  const totalRevenue = totalRevenueResult?.[0]?.totalRevenue || 0
+
+  res.json({
+    stats: {
+      totalRevenue,
+      totalUsers,
+      totalProducts,
+      outOfStockProducts,
+      pendingOrders,
+      deliveredOrders,
+      totalOrders
+    }
+  })
+}
 
 export const getUsers = async (req,res)=>{
   const users = await User.find().select('-password -verificationToken -resetToken -resetTokenExpiry')
@@ -36,7 +63,7 @@ export const getOrderById = async (req,res)=>{
 export const updateOrderStatus = async (req,res)=>{
   const { id } = req.params
   const { status } = req.body
-  const allowedStatuses = ['Placed', 'Confirmed', 'Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled']
+  const allowedStatuses = ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled']
   if (!allowedStatuses.includes(status)) {
     return res.status(400).json({ message: 'Invalid order status' })
   }

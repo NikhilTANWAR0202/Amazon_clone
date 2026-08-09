@@ -1,0 +1,100 @@
+.adminLoginPage {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f3f4f6;
+  padding: 2rem 1rem;
+}
+
+.adminLoginCard {
+  width: min(460px, 100%);
+  background: white;
+  border-radius: 24px;
+  box-shadow: 0 22px 60px rgba(15, 23, 42, 0.12);
+  padding: 2.5rem;
+}
+
+.adminLoginHeadline {
+  margin: 0 0 1rem;
+  font-size: 2rem;
+  color: #111827;
+  font-weight: 700;
+}
+
+.adminLoginIntro {
+  margin: 0 0 1.8rem;
+  color: #475569;
+  line-height: 1.6;
+}
+
+.adminAuthField {
+  display: grid;
+  gap: 0.6rem;
+  margin-bottom: 1.2rem;
+}
+
+.adminAuthField label {
+  font-size: 0.95rem;
+  color: #334155;
+}
+
+.adminAuthField input {
+  width: 100%;
+  padding: 0.95rem 1rem;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+.adminAuthActions {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.adminAuthButton {
+  width: 100%;
+  border: none;
+  border-radius: 14px;
+  padding: 0.95rem 1rem;
+  color: white;
+  background: #131921;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.adminAuthButton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 24px rgba(19, 25, 33, 0.18);
+}
+
+.adminAuthMeta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1rem;
+  font-size: 0.95rem;
+  color: #64748b;
+}
+
+.adminAuthLink {
+  color: #131921;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.adminAlert {
+  margin-bottom: 1.2rem;
+  padding: 1rem 1.2rem;
+  border-radius: 14px;
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.adminSuccess {
+  background: #dcfce7;
+  color: #166534;
+}

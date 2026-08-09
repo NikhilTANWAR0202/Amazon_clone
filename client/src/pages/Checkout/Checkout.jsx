@@ -1,20 +1,24 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../../context/AuthContext'
 import { useCart } from '../../context/CartContext'
 import api from '../../services/api'
 import { formatCurrency } from '../../utils/currency'
 import styles from './Checkout.module.css'
+import RazorpayCheckout from './RazorpayCheckout'
 
 const paymentMethods = [
   { type: 'card', label: 'Credit or debit card' },
   { type: 'upi', label: 'Scan and Pay with UPI' },
   { type: 'netbanking', label: 'Net Banking' },
+  { type: 'razorpay', label: 'Razorpay / UPI / Card / Wallet' },
   { type: 'cod', label: 'Cash on Delivery' }
 ]
 
 export default function Checkout(){
   const { cart, clearCart, setShippingAddress, setPaymentMethod } = useCart()
+  const { user } = useAuth()
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -52,10 +56,59 @@ export default function Checkout(){
     setError('')
   }
 
+  const loadRazorpay = () =>
+    new Promise((resolve) => {
+      if (window.Razorpay) {
+        resolve(true)
+        return
+      }
+      const script = document.createElement('script')
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js'
+      script.onload = () => resolve(true)
+      script.onerror = () => resolve(false)
+      document.body.appendChild(script)
+    })
+
   const handlePaymentChange = (type) => {
     setSelectedPayment(type)
     const payment = paymentMethods.find((option) => option.type === type)
     if (payment) setPaymentMethod(payment)
+  }
+
+  const orderItems = cart.items.map((item) => ({
+    productId: item.id,
+    title: item.title,
+    price: item.price,
+    quantity: item.qty || item.quantity || 1,
+    image: item.images?.[0] || item.image || item.thumbnail || ''
+  }))
+
+  const fallbackPayment = paymentMethods.find((pm) => pm.type === selectedPayment)?.label || 'Cash on Delivery'
+  const paymentMethodLabel = typeof fallbackPayment === 'string' ? fallbackPayment : fallbackPayment.label
+
+  const handlePaymentSuccess = async (paymentInfo) => {
+    setLoading(true)
+    try {
+      await api.post('/orders', {
+        items: orderItems,
+        address,
+        paymentMethod: 'Razorpay',
+        paymentStatus: 'Paid',
+        paymentInfo,
+        payment: paymentInfo,
+        shippingCost: shipping,
+        gst,
+        discount: 0,
+        total
+      })
+
+      clearCart()
+      navigate('/payment-success')
+    } catch (err) {
+      console.error(err)
+      setError(err.response?.data?.message || 'Unable to save order after payment.')
+      setLoading(false)
+    }
   }
 
   const handlePlaceOrder = async () => {
@@ -66,21 +119,16 @@ export default function Checkout(){
       return
     }
 
-    setLoading(true)
-    try{
-      const orderItems = cart.items.map(item => ({
-    productId: item.id,
-    title: item.title,
-    price: item.price,
-    quantity: item.qty || item.quantity || 1,
-    image: item.images?.[0] || item.image || item.thumbnail || ""
-}));
+    if (selectedPayment === 'razorpay') {
+      return
+    }
 
-await api.post('/orders', {
-    items: orderItems,
+    setLoading(true)
+    try {
+      await api.post('/orders', {
+        items: orderItems,
         address,
-        paymentMethod:
-paymentMethods.find((pm)=>pm.type===selectedPayment)?.label || "Cash on Delivery" || { type:'card', label:'Credit or debit card' },
+        paymentMethod: paymentMethodLabel,
         shippingCost: shipping,
         gst,
         discount: 0,
@@ -88,7 +136,7 @@ paymentMethods.find((pm)=>pm.type===selectedPayment)?.label || "Cash on Delivery
       })
       clearCart()
       navigate('/orders')
-    }catch(err){
+    } catch (err) {
       setError(err.response?.data?.message || 'Unable to place order')
       setLoading(false)
     }
@@ -166,6 +214,19 @@ paymentMethods.find((pm)=>pm.type===selectedPayment)?.label || "Cash on Delivery
             </label>
           ))}
         </div>
+        {selectedPayment === 'razorpay' && (
+          <div className={styles.razorpayInfo}>
+            <h4>Secure Razorpay payment</h4>
+            <p>Pay using UPI, Debit Card, Credit Card, Wallets, or Net Banking.</p>
+            <ul>
+              <li>UPI</li>
+              <li>Debit Card</li>
+              <li>Credit Card</li>
+              <li>Wallets</li>
+              <li>Net Banking</li>
+            </ul>
+          </div>
+        )}
       </div>
 
       <div className={styles.checkoutSection}>
@@ -191,9 +252,18 @@ paymentMethods.find((pm)=>pm.type===selectedPayment)?.label || "Cash on Delivery
             <span>Deliver to</span>
             <span>{address.fullName || 'No address saved yet'}</span>
           </div>
-          <button className={styles.checkoutButton} type="button" onClick={handlePlaceOrder} disabled={loading}>
-            {loading ? 'Placing order...' : 'Place your order'}
-          </button>
+          {selectedPayment === 'razorpay' ? (
+            <RazorpayCheckout
+              amount={total}
+              user={user}
+              address={address}
+              onSuccess={handlePaymentSuccess}
+            />
+          ) : (
+            <button className={styles.checkoutButton} type="button" onClick={handlePlaceOrder} disabled={loading}>
+              {loading ? 'Processing payment...' : 'Place your order'}
+            </button>
+          )}
         </div>
       </div>
     </div>

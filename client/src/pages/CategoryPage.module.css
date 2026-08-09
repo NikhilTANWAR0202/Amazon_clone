@@ -1,0 +1,47 @@
+.page {
+  width: 100%;
+  max-width: 100%;
+  padding: 24px 20px;
+  box-sizing: border-box;
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.title {
+  margin: 0;
+  font-size: 2rem;
+  line-height: 1.1;
+}
+
+.subtitle {
+  margin: 0;
+  color: var(--text-secondary, #6b7280);
+  max-width: 100%;
+}
+
+.stats {
+  margin-top: 8px;
+  color: var(--text-secondary, #6b7280);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 24px;
+  width: 100%;
+  margin-top: 24px;
+}
+
+.empty {
+  padding: 24px;
+  background: var(--cards, #f8fafc);
+  border-radius: 16px;
+  color: var(--text-secondary, #6b7280);
+}

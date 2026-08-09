@@ -134,11 +134,146 @@
   gap: 1rem;
 }
 
+.menuLink,
 .menuItem {
   padding: 1.5rem;
   border-radius: 16px;
   border: 1px solid var(--border);
   background: #fff;
+  display: block;
+  color: inherit;
+  text-decoration: none;
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.menuItem:hover,
+.menuLink:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+  transform: translateY(-1px);
+}
+
+.addressGrid {
+  display: grid;
+  gap: 1rem;
+}
+
+.addressCard {
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: #fff;
+}
+
+.addressCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.defaultBadge {
+  background: #d1fae5;
+  color: #166534;
+  border-radius: 9999px;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.8rem;
+}
+
+.cardActions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+}
+
+.sectionGrid {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.splitRow {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.orderList {
+  display: grid;
+  gap: 1rem;
+}
+
+.orderCard {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: #fff;
+  padding: 1.5rem;
+}
+
+.orderHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.orderMeta {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.orderTotal {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-dark);
+}
+
+.orderDate {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.orderItems {
+  display: grid;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.orderItemRow {
+  display: flex;
+  justify-content: space-between;
+  color: var(--text-muted);
+}
+
+.orderFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.btnLink {
+  display: inline-block;
+  margin-top: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: var(--brand);
+  color: #fff;
+  border-radius: 999px;
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.errorText {
+  color: #b91c1c;
+}
+
+@media (max-width: 780px) {
+  .splitRow {
+    grid-template-columns: 1fr;
+  }
 }
 
 .menuItem h3 {
