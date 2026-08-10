@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
+import styles from "./Admin.module.css";
 import Navbar from "./Navbar";
 import Sidebar from "./Sidebar";
 
@@ -50,94 +51,122 @@ function AddProduct() {
   }
 
   return (
-    <div style={{ display: "flex" }}>
+    <div className={styles.adminShell}>
       <Sidebar />
 
-      <div style={{ flex: 1 }}>
+      <div className={styles.adminContent}>
         <Navbar />
 
-        <div style={{ padding: "30px" }}>
-          <h1>Add Product</h1>
+        <main className={styles.addProductBody}>
+          <div className={styles.addProductCard}>
+            <div className={styles.addProductHeader}>
+              <div>
+                <h1 className={styles.addProductTitle}>Add Product</h1>
+                <p className={styles.addProductDescription}>
+                  Create a new catalog item and keep your storefront inventory up to date.
+                </p>
+              </div>
+            </div>
 
-          <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit} className={styles.addProductForm}>
+              <div className={styles.formGrid}>
+                <div className={styles.formGroup}>
+                  <label>Product Name</label>
+                  <input
+                    type="text"
+                    name="name"
+                    placeholder="Enter the product title"
+                    value={product.name}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
 
-            <input
-              type="text"
-              name="name"
-              placeholder="Product Name"
-              value={product.name}
-              onChange={handleChange}
-            />
+                <div className={styles.formGroup}>
+                  <label>Brand</label>
+                  <input
+                    type="text"
+                    name="brand"
+                    placeholder="Brand name"
+                    value={product.brand}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
 
-            <br /><br />
+                <div className={styles.formGroup}>
+                  <label>Category</label>
+                  <input
+                    type="text"
+                    name="category"
+                    placeholder="Category"
+                    value={product.category}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
 
-            <input
-              type="text"
-              name="brand"
-              placeholder="Brand"
-              value={product.brand}
-              onChange={handleChange}
-            />
+                <div className={styles.formGroup}>
+                  <label>Price</label>
+                  <input
+                    type="number"
+                    name="price"
+                    min="0"
+                    placeholder="₹0"
+                    value={product.price}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
 
-            <br /><br />
+                <div className={styles.formGroup}>
+                  <label>Stock</label>
+                  <input
+                    type="number"
+                    name="stock"
+                    min="0"
+                    placeholder="Units available"
+                    value={product.stock}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
 
-            <input
-              type="text"
-              name="category"
-              placeholder="Category"
-              value={product.category}
-              onChange={handleChange}
-            />
+                <div className={styles.formGroup}>
+                  <label>Image URL</label>
+                  <input
+                    type="text"
+                    name="image"
+                    placeholder="https://..."
+                    value={product.image}
+                    onChange={handleChange}
+                  />
+                </div>
+              </div>
 
-            <br /><br />
+              <div className={styles.formGroup}>
+                <label>Description</label>
+                <textarea
+                  name="description"
+                  placeholder="Enter product description"
+                  rows="5"
+                  value={product.description}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
 
-            <textarea
-              name="description"
-              placeholder="Description"
-              rows="4"
-              cols="40"
-              value={product.description}
-              onChange={handleChange}
-            />
-
-            <br /><br />
-
-            <input
-              type="number"
-              name="price"
-              placeholder="Price"
-              value={product.price}
-              onChange={handleChange}
-            />
-
-            <br /><br />
-
-            <input
-              type="number"
-              name="stock"
-              placeholder="Stock"
-              value={product.stock}
-              onChange={handleChange}
-            />
-
-            <br /><br />
-
-            <input
-              type="text"
-              name="image"
-              placeholder="Image URL"
-              value={product.image}
-              onChange={handleChange}
-            />
-
-            <br /><br />
-
-            <button type="submit">
-              Add Product
-            </button>
-
-          </form>
-        </div>
+              <div className={styles.formActions}>
+                <button type="button" className={`${styles.button} ${styles.buttonOutline}`} onClick={() => navigate('/admin/products')}>
+                  Cancel
+                </button>
+                <button type="submit" className={`${styles.button} ${styles.buttonPrimary}`}>
+                  Add Product
+                </button>
+              </div>
+            </form>
+          </div>
+        </main>
       </div>
     </div>
   );

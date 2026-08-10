@@ -15,6 +15,17 @@ export default function Cart(){
   const shipping = subtotal > 500 ? 0 : 25
   const total = +(subtotal + gst + shipping).toFixed(2)
 
+  const handleSaveForLater = (item) => {
+    if (isIn(item.id)) {
+      navigate('/wishlist')
+      return
+    }
+
+    add(item)
+    removeFromCart(item.id)
+    navigate('/wishlist')
+  }
+
   return (
     <div className={styles.cart}>
       {cart.items.length === 0 ? (
@@ -54,11 +65,7 @@ export default function Cart(){
                       <button className={styles.actionButton} onClick={() => removeFromCart(item.id)}>Delete</button>
                       <button
                         className={styles.actionButton}
-                        onClick={() => {
-                          add(item)
-                          removeFromCart(item.id)
-                        }}
-                        disabled={isIn(item.id)}
+                        onClick={() => handleSaveForLater(item)}
                       >
                         {isIn(item.id) ? 'Saved for later' : 'Save for later'}
                       </button>

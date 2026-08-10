@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import api from '../../services/api'
 import styles from './Admin.module.css'
 import Navbar from './Navbar'
@@ -120,6 +121,7 @@ export default function AdminProducts() {
 
   function buildPayload() {
     return {
+      name: form.title,
       title: form.title,
       brand: form.brand,
       category: form.category ? normalizeCategory(form.category) : form.category,
@@ -188,9 +190,11 @@ export default function AdminProducts() {
             </div>
 
             <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-              <button className={`${styles.button} ${styles.buttonPrimary}`} onClick={openAddProduct}>
-                Add new product
-              </button>
+              <Link to="/admin/add-product" className={styles.buttonLink}>
+                <button className={`${styles.button} ${styles.buttonPrimary}`} type="button">
+                  Add new product
+                </button>
+              </Link>
             </div>
           </div>
 

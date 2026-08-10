@@ -4,11 +4,13 @@ import Footer from './components/Footer/Footer'
 import Navbar from './components/Navbar/Navbar'
 
 // Admin Pages
+import AddProduct from './pages/admin/AddProduct'
 import AdminLogin from './pages/admin/AdminLogin'
 import AdminOrders from './pages/admin/AdminOrders'
 import AdminProducts from './pages/admin/AdminProducts'
 import AdminUsers from './pages/admin/AdminUsers'
 import Dashboard from './pages/admin/Dashboard'
+import EditProduct from './pages/admin/EditProduct'
 
 // Auth Pages
 import ForgotPassword from './pages/Auth/ForgotPassword'
@@ -200,6 +202,24 @@ export default function App() {
           element={
             <AdminRoute>
               <AdminProducts />
+            </AdminRoute>
+          }
+        />
+
+        <Route
+          path="/admin/add-product"
+          element={
+            <AdminRoute>
+              <AddProduct />
+            </AdminRoute>
+          }
+        />
+
+        <Route
+          path="/admin/edit-product/:id"
+          element={
+            <AdminRoute>
+              <EditProduct />
             </AdminRoute>
           }
         />

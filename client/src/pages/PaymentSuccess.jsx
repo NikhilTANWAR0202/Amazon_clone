@@ -1,21 +1,42 @@
+import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import styles from './PaymentSuccess.module.css'
 
 export default function PaymentSuccess() {
   const navigate = useNavigate()
 
-  return (
-    <div className={styles.page}>
-      <div className={styles.card}>
-        <h1>Payment Successful 🎉</h1>
-        <p>Your order has been placed successfully.</p>
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      navigate('/orders')
+    }, 4000)
 
-        <button
-          className={styles.button}
-          onClick={() => navigate('/')}
-        >
-          Continue Shopping
-        </button>
+    return () => clearTimeout(timer)
+  }, [navigate])
+
+  return (
+    <div
+      style={{
+        minHeight: '100vh',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        background: '#f0fdf4'
+      }}
+    >
+      <div
+        style={{
+          background: 'white',
+          padding: '40px',
+          borderRadius: '20px',
+          textAlign: 'center',
+          boxShadow: '0 10px 30px rgba(0,0,0,0.1)'
+        }}
+      >
+        <div style={{ fontSize: '70px', color: 'green' }}>✅</div>
+
+        <h1>Order Placed Successfully! 🎉</h1>
+
+        <p>Your payment was processed successfully.</p>
+        <p>Redirecting to your orders in 4 seconds...</p>
       </div>
     </div>
   )

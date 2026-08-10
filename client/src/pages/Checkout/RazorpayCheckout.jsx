@@ -6,36 +6,47 @@ function RazorpayCheckout({ amount, user, address, onSuccess }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
+  // Load Razorpay script dynamically
   const loadRazorpayScript = () =>
     new Promise((resolve) => {
       if (window.Razorpay) {
         resolve(true)
         return
       }
+
       const script = document.createElement('script')
       script.src = 'https://checkout.razorpay.com/v1/checkout.js'
       script.onload = () => resolve(true)
       script.onerror = () => resolve(false)
+
       document.body.appendChild(script)
     })
 
   const handlePayment = async () => {
     setError('')
+
     if (!amount || Number(amount) <= 0) {
       setError('Invalid payment amount.')
       return
     }
+
     setLoading(true)
 
     try {
+      // Load Razorpay SDK
       const scriptLoaded = await loadRazorpayScript()
+
       if (!scriptLoaded) {
         setError('Unable to load Razorpay checkout. Please try again.')
         setLoading(false)
         return
       }
 
-      const response = await api.post('/payment/create-order', { amount })
+      // Create order on backend
+      const response = await api.post('/payment/create-order', {
+        amount
+      })
+
       const { order, key } = response.data
 
       const options = {
@@ -45,17 +56,25 @@ function RazorpayCheckout({ amount, user, address, onSuccess }) {
         name: 'Amazon Clone',
         description: 'Secure online payment using Razorpay',
         order_id: order.id,
+
         prefill: {
           name: user?.name || address?.fullName || 'Guest User',
           email: user?.email || '',
           contact: address?.phone || ''
         },
+
         notes: {
           address: `${address?.addressLine1 || ''}, ${address?.city || ''}`
         },
-        theme: { color: '#0b6e4f' },
+
+        theme: {
+          color: '#0b6e4f'
+        },
+
+        // SUCCESS HANDLER
         handler: async (paymentResponse) => {
           try {
+            // Verify payment signature on backend
             const verifyRes = await api.post('/payment/verify', {
               razorpay_order_id: paymentResponse.razorpay_order_id,
               razorpay_payment_id: paymentResponse.razorpay_payment_id,
@@ -63,7 +82,8 @@ function RazorpayCheckout({ amount, user, address, onSuccess }) {
             })
 
             if (verifyRes.data.success) {
-              onSuccess({
+              // Wait for parent success handler
+              await onSuccess({
                 paymentId: paymentResponse.razorpay_payment_id,
                 orderId: paymentResponse.razorpay_order_id,
                 signature: paymentResponse.razorpay_signature,
@@ -76,10 +96,14 @@ function RazorpayCheckout({ amount, user, address, onSuccess }) {
             }
           } catch (err) {
             console.error(err)
-            setError(err.response?.data?.message || 'Payment verification failed. Please try again.')
+            setError(
+              err.response?.data?.message ||
+                'Payment verification failed. Please try again.'
+            )
             setLoading(false)
           }
         },
+
         modal: {
           ondismiss: () => {
             setLoading(false)
@@ -91,7 +115,10 @@ function RazorpayCheckout({ amount, user, address, onSuccess }) {
       razorpayWindow.open()
     } catch (err) {
       console.error(err)
-      setError(err.response?.data?.message || 'Unable to start Razorpay payment.')
+      setError(
+        err.response?.data?.message ||
+          'Unable to start Razorpay payment.'
+      )
       setLoading(false)
     }
   }
@@ -99,7 +126,13 @@ function RazorpayCheckout({ amount, user, address, onSuccess }) {
   return (
     <div className={styles.wrapper}>
       {error && <div className={styles.error}>{error}</div>}
-      <button className={styles.razorpayBtn} type="button" onClick={handlePayment} disabled={loading}>
+
+      <button
+        className={styles.payButton}
+        type="button"
+        onClick={handlePayment}
+        disabled={loading}
+      >
         {loading ? 'Opening Razorpay...' : 'Pay with Razorpay'}
       </button>
     </div>

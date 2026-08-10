@@ -1,5 +1,4 @@
-
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useCart } from '../../context/CartContext'
@@ -16,13 +15,17 @@ const paymentMethods = [
   { type: 'cod', label: 'Cash on Delivery' }
 ]
 
-export default function Checkout(){
+export default function Checkout() {
   const { cart, clearCart, setShippingAddress, setPaymentMethod } = useCart()
   const { user } = useAuth()
   const navigate = useNavigate()
+
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [showSuccess, setShowSuccess] = useState(false)
+  const redirectTimerRef = useRef(null)
+
   const [address, setAddress] = useState({
     fullName: '',
     addressLine1: '',
@@ -32,22 +35,37 @@ export default function Checkout(){
     zip: '',
     phone: ''
   })
-  const [selectedPayment, setSelectedPayment] = useState(cart.paymentMethod?.type || 'card')
 
-  useEffect(()=>{
-    if(cart.shippingAddress){
+  const [selectedPayment, setSelectedPayment] = useState(
+    cart.paymentMethod?.type || 'card'
+  )
+
+  useEffect(() => {
+    if (cart.shippingAddress) {
       setAddress(cart.shippingAddress)
     }
-  },[cart.shippingAddress])
+  }, [cart.shippingAddress])
 
-  const subtotal = useMemo(() => cart.items.reduce((sum,item)=>sum + item.price * (item.qty ?? item.quantity ?? 1), 0), [cart.items])
+  useEffect(() => {
+    return () => {
+      window.clearTimeout(redirectTimerRef.current)
+    }
+  }, [])
+
+  const subtotal = useMemo(() => {
+    return cart.items.reduce(
+      (sum, item) => sum + item.price * (item.qty ?? item.quantity ?? 1),
+      0
+    )
+  }, [cart.items])
+
   const gst = Number((subtotal * 0.18).toFixed(2))
   const shipping = subtotal > 500 ? 0 : 25
   const total = Number((subtotal + gst + shipping).toFixed(2))
 
   const handleAddressChange = (e) => {
     const { name, value } = e.target
-    setAddress(prev => ({ ...prev, [name]: value }))
+    setAddress((prev) => ({ ...prev, [name]: value }))
   }
 
   const saveAddress = () => {
@@ -55,19 +73,6 @@ export default function Checkout(){
     setSuccess('Delivery address saved successfully.')
     setError('')
   }
-
-  const loadRazorpay = () =>
-    new Promise((resolve) => {
-      if (window.Razorpay) {
-        resolve(true)
-        return
-      }
-      const script = document.createElement('script')
-      script.src = 'https://checkout.razorpay.com/v1/checkout.js'
-      script.onload = () => resolve(true)
-      script.onerror = () => resolve(false)
-      document.body.appendChild(script)
-    })
 
   const handlePaymentChange = (type) => {
     setSelectedPayment(type)
@@ -83,11 +88,21 @@ export default function Checkout(){
     image: item.images?.[0] || item.image || item.thumbnail || ''
   }))
 
-  const fallbackPayment = paymentMethods.find((pm) => pm.type === selectedPayment)?.label || 'Cash on Delivery'
-  const paymentMethodLabel = typeof fallbackPayment === 'string' ? fallbackPayment : fallbackPayment.label
+  const paymentMethodLabel =
+    paymentMethods.find((pm) => pm.type === selectedPayment)?.label ||
+    'Cash on Delivery'
+
+  // Razorpay payment success
+  const scheduleSuccessRedirect = () => {
+    redirectTimerRef.current = window.setTimeout(() => {
+      setShowSuccess(false)
+      navigate('/orders')
+    }, 3000)
+  }
 
   const handlePaymentSuccess = async (paymentInfo) => {
     setLoading(true)
+
     try {
       await api.post('/orders', {
         items: orderItems,
@@ -103,27 +118,41 @@ export default function Checkout(){
       })
 
       clearCart()
-      navigate('/payment-success')
+      setLoading(false)
+      setShowSuccess(true)
+      scheduleSuccessRedirect()
     } catch (err) {
       console.error(err)
-      setError(err.response?.data?.message || 'Unable to save order after payment.')
+      setError(
+        err.response?.data?.message ||
+          'Unable to save order after payment.'
+      )
       setLoading(false)
     }
   }
 
+  // Cash on Delivery / normal order
   const handlePlaceOrder = async () => {
     setError('')
     setSuccess('')
-    if (!address.fullName || !address.addressLine1 || !address.city || !address.state || !address.zip || !address.phone) {
+
+    if (
+      !address.fullName ||
+      !address.addressLine1 ||
+      !address.city ||
+      !address.state ||
+      !address.zip ||
+      !address.phone
+    ) {
       setError('Please fill in all required address fields before placing the order.')
       return
     }
 
-    if (selectedPayment === 'razorpay') {
-      return
-    }
+    // Razorpay handled separately
+    if (selectedPayment === 'razorpay') return
 
     setLoading(true)
+
     try {
       await api.post('/orders', {
         items: orderItems,
@@ -134,138 +163,213 @@ export default function Checkout(){
         discount: 0,
         total
       })
+
       clearCart()
-      navigate('/orders')
+      setLoading(false)
+      setShowSuccess(true)
+      scheduleSuccessRedirect()
     } catch (err) {
+      console.error(err)
       setError(err.response?.data?.message || 'Unable to place order')
       setLoading(false)
     }
   }
 
-  if(cart.items.length === 0) return (
-    <div className="container">
-      <h2>Checkout</h2>
-      <p>Your cart is empty.</p>
-    </div>
-  )
+  if (cart.items.length === 0 && !showSuccess) {
+    return (
+      <div className="container">
+        <h2>Checkout</h2>
+        <p>Your cart is empty.</p>
+      </div>
+    )
+  }
 
   return (
-    <div className={styles.checkoutPage}>
-      <div className={styles.checkoutSection}>
-        <div className={styles.checkoutHeader}>
-          <div>
-            <h2>Delivery address</h2>
-            <p>Enter a delivery address for this order.</p>
-          </div>
-          <button className={styles.checkoutButton} type="button" onClick={saveAddress}>Save address</button>
-        </div>
+    <>
+      {/* Success Animation */}
+      {showSuccess && (
+        <div className={styles.successOverlay}>
+          <div className={styles.successCard}>
+            <div className={styles.successCircle}>✓</div>
 
-        {error && <div className={styles.alertError}>{error}</div>}
-        {success && <div className={styles.alertSuccess}>{success}</div>}
+            <h2>Order Placed Successfully! 🎉</h2>
 
-        <div className={styles.checkoutStep}>
-          <div className={styles.checkoutField}>
-            <label htmlFor="fullName">Full name</label>
-            <input id="fullName" name="fullName" value={address.fullName} onChange={handleAddressChange} placeholder="John Doe" />
-          </div>
-          <div className={styles.checkoutField}>
-            <label htmlFor="addressLine1">Address line 1</label>
-            <input id="addressLine1" name="addressLine1" value={address.addressLine1} onChange={handleAddressChange} placeholder="House number, street, landmark" />
-          </div>
-          <div className={styles.checkoutField}>
-            <label htmlFor="addressLine2">Address line 2</label>
-            <input id="addressLine2" name="addressLine2" value={address.addressLine2} onChange={handleAddressChange} placeholder="Apartment, suite, unit, building, floor" />
-          </div>
-          <div className={styles.addressRow}>
-            <div className={styles.checkoutField}>
-              <label htmlFor="city">City</label>
-              <input id="city" name="city" value={address.city} onChange={handleAddressChange} placeholder="City" />
-            </div>
-            <div className={styles.checkoutField}>
-              <label htmlFor="state">State</label>
-              <input id="state" name="state" value={address.state} onChange={handleAddressChange} placeholder="State" />
-            </div>
-          </div>
-          <div className={styles.addressRow}>
-            <div className={styles.checkoutField}>
-              <label htmlFor="zip">ZIP / Postal code</label>
-              <input id="zip" name="zip" value={address.zip} onChange={handleAddressChange} placeholder="Postal code" />
-            </div>
-            <div className={styles.checkoutField}>
-              <label htmlFor="phone">Phone number</label>
-              <input id="phone" name="phone" value={address.phone} onChange={handleAddressChange} placeholder="Phone number" />
-            </div>
+            <p>Your order has been placed successfully.</p>
+            <p>Thank you for shopping with Amazon Clone.</p>
+
+            <div className={styles.successLoader}></div>
+
+            <span>Preparing your order...</span>
           </div>
         </div>
-      </div>
+      )}
 
-      <div className={styles.checkoutSection}>
-        <h3 className={styles.checkoutStepTitle}>Payment method</h3>
-        <div className={styles.paymentOptions}>
-          {paymentMethods.map((method) => (
-            <label key={method.type} className={styles.paymentOption}>
+      <div className={styles.checkoutPage}>
+        {/* Delivery Address */}
+        <div className={styles.checkoutSection}>
+          <h2 className={styles.checkoutTitle}>Delivery address</h2>
+          <p className={styles.checkoutSubtitle}>
+            Enter a delivery address for this order.
+          </p>
+
+          <button
+            className={styles.saveAddressButton}
+            type="button"
+            onClick={saveAddress}
+          >
+            Save address
+          </button>
+
+          {error && <div className={styles.alertError}>{error}</div>}
+          {success && <div className={styles.alertSuccess}>{success}</div>}
+
+          <div className={styles.checkoutStep}>
+            <div className={styles.checkoutField}>
+              <label>Full name</label>
               <input
-                type="radio"
-                name="payment"
-                checked={selectedPayment === method.type}
-                onChange={() => handlePaymentChange(method.type)}
+                name="fullName"
+                value={address.fullName}
+                onChange={handleAddressChange}
+                placeholder="John Doe"
               />
-              <span>{method.label}</span>
-            </label>
-          ))}
-        </div>
-        {selectedPayment === 'razorpay' && (
-          <div className={styles.razorpayInfo}>
-            <h4>Secure Razorpay payment</h4>
-            <p>Pay using UPI, Debit Card, Credit Card, Wallets, or Net Banking.</p>
-            <ul>
-              <li>UPI</li>
-              <li>Debit Card</li>
-              <li>Credit Card</li>
-              <li>Wallets</li>
-              <li>Net Banking</li>
-            </ul>
-          </div>
-        )}
-      </div>
+            </div>
 
-      <div className={styles.checkoutSection}>
-        <h3 className={styles.checkoutStepTitle}>Order summary</h3>
-        <div className={styles.summaryCard}>
-          <div className={styles.summaryLine}>
-            <span>Subtotal ({cart.items.length} items)</span>
-            <span>{formatCurrency(subtotal)}</span>
+            <div className={styles.checkoutField}>
+              <label>Address line 1</label>
+              <input
+                name="addressLine1"
+                value={address.addressLine1}
+                onChange={handleAddressChange}
+                placeholder="House number, street, landmark"
+              />
+            </div>
+
+            <div className={styles.checkoutField}>
+              <label>Address line 2</label>
+              <input
+                name="addressLine2"
+                value={address.addressLine2}
+                onChange={handleAddressChange}
+                placeholder="Apartment, suite, building, floor"
+              />
+            </div>
+
+            <div className={styles.addressRow}>
+              <div className={styles.checkoutField}>
+                <label>City</label>
+                <input
+                  name="city"
+                  value={address.city}
+                  onChange={handleAddressChange}
+                  placeholder="City"
+                />
+              </div>
+
+              <div className={styles.checkoutField}>
+                <label>State</label>
+                <input
+                  name="state"
+                  value={address.state}
+                  onChange={handleAddressChange}
+                  placeholder="State"
+                />
+              </div>
+            </div>
+
+            <div className={styles.addressRow}>
+              <div className={styles.checkoutField}>
+                <label>ZIP / Postal code</label>
+                <input
+                  name="zip"
+                  value={address.zip}
+                  onChange={handleAddressChange}
+                  placeholder="Postal code"
+                />
+              </div>
+
+              <div className={styles.checkoutField}>
+                <label>Phone number</label>
+                <input
+                  name="phone"
+                  value={address.phone}
+                  onChange={handleAddressChange}
+                  placeholder="Phone number"
+                />
+              </div>
+            </div>
           </div>
-          <div className={styles.summaryLine}>
-            <span>GST</span>
-            <span>{formatCurrency(gst)}</span>
+        </div>
+
+        {/* Payment Section */}
+        <div className={styles.checkoutSection}>
+          <h3 className={styles.checkoutStepTitle}>Payment method</h3>
+
+          <div className={styles.paymentOptions}>
+            {paymentMethods.map((method) => (
+              <label key={method.type} className={styles.paymentOption}>
+                <input
+                  type="radio"
+                  checked={selectedPayment === method.type}
+                  onChange={() => handlePaymentChange(method.type)}
+                />
+                <span>{method.label}</span>
+              </label>
+            ))}
           </div>
-          <div className={styles.summaryLine}>
-            <span>Shipping</span>
-            <span>{formatCurrency(shipping)}</span>
-          </div>
-          <div className={styles.summaryTotal}>
-            <span>Total</span>
-            <span>{formatCurrency(total)}</span>
-          </div>
-          <div className={styles.summaryLine}>
-            <span>Deliver to</span>
-            <span>{address.fullName || 'No address saved yet'}</span>
-          </div>
-          {selectedPayment === 'razorpay' ? (
+
+          {selectedPayment === 'razorpay' && (
             <RazorpayCheckout
               amount={total}
               user={user}
               address={address}
               onSuccess={handlePaymentSuccess}
             />
-          ) : (
-            <button className={styles.checkoutButton} type="button" onClick={handlePlaceOrder} disabled={loading}>
-              {loading ? 'Processing payment...' : 'Place your order'}
-            </button>
           )}
         </div>
+
+        {/* Order Summary */}
+        <div className={styles.checkoutSection}>
+          <h3 className={styles.checkoutStepTitle}>Order summary</h3>
+
+          <div className={styles.summaryCard}>
+            <div className={styles.summaryLine}>
+              <span>Subtotal ({cart.items.length} items)</span>
+              <span>{formatCurrency(subtotal)}</span>
+            </div>
+
+            <div className={styles.summaryLine}>
+              <span>GST</span>
+              <span>{formatCurrency(gst)}</span>
+            </div>
+
+            <div className={styles.summaryLine}>
+              <span>Shipping</span>
+              <span>{formatCurrency(shipping)}</span>
+            </div>
+
+            <div className={styles.summaryTotal}>
+              <span>Total</span>
+              <span>{formatCurrency(total)}</span>
+            </div>
+
+            <div className={styles.summaryLine}>
+              <span>Deliver to</span>
+              <span>{address.fullName || 'No address saved yet'}</span>
+            </div>
+
+            {selectedPayment !== 'razorpay' && (
+              <button
+                className={styles.checkoutButton}
+                type="button"
+                onClick={handlePlaceOrder}
+                disabled={loading}
+              >
+                {loading ? 'Processing order...' : 'Place your order'}
+              </button>
+            )}
+          </div>
+        </div>
       </div>
-    </div>
+    </>
   )
 }

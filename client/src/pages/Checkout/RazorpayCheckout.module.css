@@ -1,29 +1,34 @@
 .wrapper {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
+  width: 100%;
+}
+
+.payButton {
+  width: 100%;
+  padding: 14px 18px;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #0b6e4f, #0f9d58);
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.payButton:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.payButton:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 
 .error {
-  color: #b91c1c;
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
   background: #fee2e2;
-  padding: 0.75rem 1rem;
-  border-radius: 0.75rem;
-  font-size: 0.95rem;
-}
-
-.razorpayBtn {
-  background: #2d8617;
-  color: white;
-  border: none;
-  padding: 0.9rem 1.25rem;
-  border-radius: 0.75rem;
-  cursor: pointer;
-  width: 100%;
-  font-weight: 600;
-}
-
-.razorpayBtn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+  color: #b91c1c;
+  font-size: 14px;
 }
