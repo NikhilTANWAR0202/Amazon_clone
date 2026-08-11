@@ -36,7 +36,18 @@ export const getUsers = async (req,res)=>{
 export const updateUserRole = async (req,res)=>{
   const { id } = req.params
   const { role } = req.body
+  if (!['user','admin'].includes(role)) {
+    return res.status(400).json({ message:'Invalid role' })
+  }
   const user = await User.findByIdAndUpdate(id, { role }, { new:true }).select('-password -verificationToken -resetToken -resetTokenExpiry')
+  if(!user) return res.status(404).json({ message:'User not found' })
+  res.json({ user })
+}
+
+export const updateUserBlock = async (req,res)=>{
+  const { id } = req.params
+  const { blocked } = req.body
+  const user = await User.findByIdAndUpdate(id, { blocked: Boolean(blocked) }, { new:true }).select('-password -verificationToken -resetToken -resetTokenExpiry')
   if(!user) return res.status(404).json({ message:'User not found' })
   res.json({ user })
 }
@@ -63,12 +74,17 @@ export const getOrderById = async (req,res)=>{
 export const updateOrderStatus = async (req,res)=>{
   const { id } = req.params
   const { status } = req.body
-  const allowedStatuses = ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled']
+  const allowedStatuses = ['Processing', 'Packed', 'Shipped', 'Out for Delivery', 'Delivered', 'Cancelled']
   if (!allowedStatuses.includes(status)) {
     return res.status(400).json({ message: 'Invalid order status' })
   }
-  const order = await Order.findByIdAndUpdate(id, { status }, { new:true }).populate('user', 'firstName lastName email')
+  const order = await Order.findById(id)
   if(!order) return res.status(404).json({ message:'Order not found' })
+  order.status = status
+  order.statusTimeline = order.statusTimeline || []
+  order.statusTimeline.push({ status, updatedAt: new Date() })
+  await order.save()
+  await order.populate('user', 'firstName lastName email')
   res.json({ order })
 }
 

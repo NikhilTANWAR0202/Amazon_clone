@@ -45,6 +45,7 @@ app.use(limiter)
 
 app.use('/api/auth', authRoutes)
 app.use('/api/products', productRoutes)
+app.use('/api/reviews', reviewRoutes)
 app.use('/api/cart', cartRoutes)
 app.use('/api/admin', adminRoutes)
 app.use('/api/users', userRoutes)

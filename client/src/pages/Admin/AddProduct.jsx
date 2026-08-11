@@ -41,9 +41,9 @@ function AddProduct() {
 
       const res = await api.post('/admin/products', payload)
 
-      alert(res.data.message);
+      alert(res.data.message || 'Product added successfully')
 
-      navigate("/admin/products");
+      navigate("/admin/products")
     } catch (err) {
       console.error(err);
       alert(err.response?.data?.message || "Failed to add product");

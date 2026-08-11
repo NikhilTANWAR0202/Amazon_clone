@@ -30,6 +30,25 @@ export default function Orders(){
     load()
   },[])
 
+  const handleReturnRequest = async (orderId) => {
+    const reason = window.prompt('Please enter the reason for return (minimum 10 characters)')
+    if (!reason || reason.trim().length < 10) {
+      alert('Return reason must be at least 10 characters long.')
+      return
+    }
+
+    try {
+      await api.patch(`/orders/${orderId}/return`, { reason: reason.trim() })
+      const updated = orders.map((order) =>
+        order._id === orderId ? { ...order, returnStatus: 'Requested', returnReason: reason.trim(), returnRequestedAt: new Date().toISOString() } : order
+      )
+      setOrders(updated)
+      alert('Return request submitted successfully.')
+    } catch (err) {
+      alert(err.response?.data?.message || 'Unable to submit return request')
+    }
+  }
+
   if(loading) return <div className="container"><h2>My Orders</h2><p>Loading orders...</p></div>
   if(error) return <div className="container"><h2>My Orders</h2><p>{error}</p></div>
   if(orders.length===0) return <div className="container"><h2>My Orders</h2><p>No past orders found.</p></div>
@@ -55,9 +74,23 @@ export default function Orders(){
                 </div>
               ))}
             </div>
-            <div style={{marginTop:16, display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+            <div style={{marginTop:16, display:'flex', justifyContent:'space-between', alignItems:'center', gap: 16, flexWrap: 'wrap'}}>
               <span>Status: <strong>{statusLabel(order.status)}</strong></span>
-              <Link to={`/orders/track/${order._id}`} style={{ color: '#1d4ed8' }}>Track order</Link>
+              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                <Link to={`/orders/track/${order._id}`} style={{ color: '#1d4ed8' }}>Track order</Link>
+                {order.status === 'Delivered' && order.returnStatus === 'NotRequested' && (
+                  <button
+                    type="button"
+                    onClick={() => handleReturnRequest(order._id)}
+                    style={{ background: '#111827', color: '#fff', borderRadius: 8, padding: '10px 16px', border: 'none', cursor: 'pointer' }}
+                  >
+                    Request return
+                  </button>
+                )}
+                {order.returnStatus !== 'NotRequested' && (
+                  <span style={{ fontSize: 13, color: '#6b7280' }}>{order.returnStatus}</span>
+                )}
+              </div>
             </div>
           </article>
         ))}

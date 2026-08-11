@@ -39,6 +39,7 @@ const userSchema = new mongoose.Schema({
   apartment: String,
   avatar: String,
   role: { type: String, default: 'user' },
+  blocked: { type: Boolean, default: false },
   emailVerified: { type: Boolean, default: false },
   verificationToken: String,
   resetToken: String,

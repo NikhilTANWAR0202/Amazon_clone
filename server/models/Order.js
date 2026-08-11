@@ -17,7 +17,28 @@ const orderSchema = new mongoose.Schema({
   gst: { type: Number, required: true },
   discount: { type: Number, default: 0 },
   total: { type: Number, required: true },
-  status: { type: String, default: 'Placed' },
+  status: {
+    type: String,
+    enum: ['Processing', 'Packed', 'Shipped', 'Out for Delivery', 'Delivered', 'Cancelled'],
+    default: 'Processing'
+  },
+  statusTimeline: [
+    {
+      status: {
+        type: String,
+        enum: ['Processing', 'Packed', 'Shipped', 'Out for Delivery', 'Delivered', 'Cancelled']
+      },
+      updatedAt: { type: Date, default: Date.now }
+    }
+  ],
+  returnStatus: {
+    type: String,
+    enum: ['NotRequested', 'Requested', 'Approved', 'Rejected', 'Refunded'],
+    default: 'NotRequested'
+  },
+  returnReason: { type: String, default: '' },
+  returnRequestedAt: { type: Date },
+  returnUpdatedAt: { type: Date },
   paymentStatus: {
     type: String,
     enum: ['Pending', 'Paid', 'Failed'],

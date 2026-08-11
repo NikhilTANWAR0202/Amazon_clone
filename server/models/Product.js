@@ -13,6 +13,8 @@ const productSchema = new mongoose.Schema(
     images: [{ type: String, trim: true }],
     thumbnail: { type: String, trim: true },
     rating: { type: Number, default: 4.5, min: 0, max: 5 },
+    averageRating: { type: Number, default: 0, min: 0, max: 5 },
+    numReviews: { type: Number, default: 0, min: 0 },
     stock: { type: Number, default: 0, min: 0 },
     description: { type: String, required: true },
     featured: { type: Boolean, default: false },

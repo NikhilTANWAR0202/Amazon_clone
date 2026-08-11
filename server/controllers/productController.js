@@ -47,38 +47,62 @@ export const seedProducts = async (req, res) => {
 
 export const getProducts = async (req, res) => {
   try {
-    const { q, category, featured, page = 1, limit = 100, sort } = req.query
+    const {
+      q,
+      category,
+      featured,
+      minPrice,
+      maxPrice,
+      rating,
+      inStock,
+      sort,
+      page = 1,
+      limit = 20
+    } = req.query
+
     const filter = {}
 
     if (category) filter.category = new RegExp(`^${category}$`, 'i')
     if (featured === 'true') filter.isFeatured = true
+    if (minPrice) filter.price = { ...filter.price, $gte: Number(minPrice) }
+    if (maxPrice) filter.price = { ...filter.price, $lte: Number(maxPrice) }
+    if (rating) filter.averageRating = { $gte: Number(rating) }
+    if (inStock === 'true') filter.stock = { $gt: 0 }
     if (q) {
+      const queryRegex = new RegExp(q, 'i')
       filter.$or = [
-        { title: new RegExp(q, 'i') },
-        { name: new RegExp(q, 'i') },
-        { brand: new RegExp(q, 'i') },
-        { category: new RegExp(q, 'i') },
-        { description: new RegExp(q, 'i') }
+        { title: queryRegex },
+        { name: queryRegex },
+        { brand: queryRegex },
+        { category: queryRegex },
+        { description: queryRegex }
       ]
     }
 
-    const skip = (Number(page) - 1) * Number(limit)
+    const pageNumber = Math.max(1, Number(page))
+    const pageSize = Math.max(1, Number(limit))
+    const skip = (pageNumber - 1) * pageSize
+
     const sortValue =
       sort === 'priceAsc'
         ? { price: 1 }
         : sort === 'priceDesc'
         ? { price: -1 }
         : sort === 'ratingDesc'
-        ? { rating: -1 }
+        ? { averageRating: -1 }
+        : sort === 'newest'
+        ? { createdAt: -1 }
         : { createdAt: -1 }
 
     const [products, count, categories] = await Promise.all([
-      Product.find(filter).sort(sortValue).skip(skip).limit(Number(limit)),
+      Product.find(filter).sort(sortValue).skip(skip).limit(pageSize),
       Product.countDocuments(filter),
       Product.distinct('category')
     ])
 
-    res.json({ products, count, categories })
+    const totalPages = Math.ceil(count / pageSize)
+
+    res.json({ products, totalProducts: count, page: pageNumber, limit: pageSize, totalPages, categories })
   } catch (err) {
     res.status(500).json({ message: err.message })
   }

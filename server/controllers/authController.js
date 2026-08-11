@@ -36,9 +36,9 @@ export const login = async (req, res) => {
 
   const user = await User.findOne({ email });
 
-  if (!user) {
+  if (!user || user.blocked) {
     return res.status(400).json({
-      message: "Invalid credentials"
+      message: user?.blocked ? 'Account blocked' : 'Invalid credentials'
     });
   }
 

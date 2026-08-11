@@ -149,3 +149,32 @@ export const getOrderById = async (req,res)=>{
     res.status(500).json({ success: false, message: 'Unable to fetch order' })
   }
 }
+
+export const requestOrderReturn = async (req,res)=>{
+  try {
+    const { reason } = req.body
+    const order = await Order.findById(req.params.id)
+    if(!order) return res.status(404).json({ success: false, message:'Order not found' })
+    if(String(order.user)!==String(req.user._id)) return res.status(403).json({ success: false, message:'Not allowed' })
+    if(order.status !== 'Delivered') {
+      return res.status(400).json({ success: false, message:'Return is only available for delivered orders' })
+    }
+    if(order.returnStatus && order.returnStatus !== 'NotRequested') {
+      return res.status(400).json({ success: false, message:'Return has already been requested for this order' })
+    }
+    if (!reason || typeof reason !== 'string' || reason.trim().length < 10) {
+      return res.status(400).json({ success: false, message:'Please provide a return reason of at least 10 characters' })
+    }
+
+    order.returnStatus = 'Requested'
+    order.returnReason = reason.trim()
+    order.returnRequestedAt = new Date()
+    order.returnUpdatedAt = new Date()
+    await order.save()
+
+    res.json({ success: true, message:'Return request submitted successfully', order })
+  } catch (error) {
+    console.error('Request order return error:', error)
+    res.status(500).json({ success: false, message: 'Unable to request return' })
+  }
+}

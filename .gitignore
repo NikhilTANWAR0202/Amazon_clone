@@ -19,3 +19,10 @@ client/dist/
 server/.env
 client/.env
 *.zip
+node_modules/ 
+client/node_modules/ 
+server/node_modules/ 
+client/dist/ 
+.env 
+server/.env 
+*.zip 
