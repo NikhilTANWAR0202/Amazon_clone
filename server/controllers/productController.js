@@ -149,9 +149,27 @@ export const searchProducts = async (req, res) => {
   }
 }
 
+import { uploadToCloudinary } from '../utils/cloudinary.js'
+
+export const uploadProductImage = async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ message: 'No image file provided' })
+    const result = await uploadToCloudinary(req.file.buffer, { folder: 'amazon-clone/products' })
+    res.json({ url: result.secure_url })
+  } catch (err) {
+    res.status(500).json({ message: err.message })
+  }
+}
+
 export const addProduct = async (req, res) => {
   try {
     const payload = normalizeProduct(req.body)
+    if (req.file) {
+      const uploadResult = await uploadToCloudinary(req.file.buffer, { folder: 'amazon-clone/products' })
+      payload.images = [uploadResult.secure_url]
+      payload.thumbnail = uploadResult.secure_url
+      payload.image = uploadResult.secure_url
+    }
     const product = await Product.create(payload)
     res.status(201).json({ product })
   } catch (err) {
@@ -162,6 +180,12 @@ export const addProduct = async (req, res) => {
 export const updateProduct = async (req, res) => {
   try {
     const payload = normalizeProduct(req.body)
+    if (req.file) {
+      const uploadResult = await uploadToCloudinary(req.file.buffer, { folder: 'amazon-clone/products' })
+      payload.images = [uploadResult.secure_url]
+      payload.thumbnail = uploadResult.secure_url
+      payload.image = uploadResult.secure_url
+    }
     const product = await Product.findByIdAndUpdate(
       req.params.id,
       { ...payload, updatedAt: Date.now() },

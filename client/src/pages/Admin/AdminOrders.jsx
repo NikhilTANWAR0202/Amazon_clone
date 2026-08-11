@@ -58,6 +58,16 @@ function AdminOrders() {
     }
   }
 
+  async function updateReturnStatus(id, returnStatus) {
+    try {
+      await api.put(`/admin/orders/${id}/return`, { returnStatus })
+      await fetchOrders()
+    } catch (err) {
+      console.error(err)
+      setError('Unable to update return status')
+    }
+  }
+
   return (
     <div className={styles.adminShell}>
       <Sidebar />
@@ -88,6 +98,7 @@ function AdminOrders() {
                     <th>Total</th>
                     <th>Payment</th>
                     <th>Status</th>
+                    <th>Return</th>
                     <th>Items</th>
                     <th>Actions</th>
                   </tr>
@@ -105,20 +116,33 @@ function AdminOrders() {
                         <td>₹ {Number(order.totalPrice ?? order.total ?? 0).toLocaleString('en-IN')}</td>
                         <td>{order.paymentMethod || 'N/A'}</td>
                         <td>
-                          <span className={`${styles.badge} ${order.status === 'Delivered' ? styles.badgeSuccess : order.status === 'Cancelled' ? styles.badgeDanger : order.status === 'Pending' ? styles.badgeWarning : styles.badgePrimary}`}>
+                          <span className={`${styles.badge} ${order.status === 'Delivered' ? styles.badgeSuccess : order.status === 'Cancelled' ? styles.badgeDanger : order.status === 'Processing' ? styles.badgeWarning : styles.badgePrimary}`}>
                             {order.status}
+                          </span>
+                        </td>
+                        <td>
+                          <span className={`${styles.badge} ${order.returnStatus === 'Approved' ? styles.badgeSuccess : order.returnStatus === 'Rejected' ? styles.badgeDanger : order.returnStatus === 'Requested' ? styles.badgeWarning : styles.badgePrimary}`}>
+                            {order.returnStatus || 'NotRequested'}
                           </span>
                         </td>
                         <td>{order.items?.length ?? 0}</td>
                         <td>
                           <div className={styles.tableActions} style={{ justifyContent: 'flex-end' }}>
                             <select className={styles.formGroup} value={order.status} onChange={(e) => updateStatus(order._id, e.target.value)}>
-                              <option value="Pending">Pending</option>
                               <option value="Processing">Processing</option>
+                              <option value="Packed">Packed</option>
                               <option value="Shipped">Shipped</option>
+                              <option value="Out for Delivery">Out for Delivery</option>
                               <option value="Delivered">Delivered</option>
                               <option value="Cancelled">Cancelled</option>
                             </select>
+                            {order.returnStatus === 'Requested' && (
+                              <select className={styles.formGroup} value={order.returnStatus} onChange={(e) => updateReturnStatus(order._id, e.target.value)}>
+                                <option value="Requested">Requested</option>
+                                <option value="Approved">Approve</option>
+                                <option value="Rejected">Reject</option>
+                              </select>
+                            )}
                             <button className={`${styles.button} ${styles.buttonSecondary}`} onClick={() => toggleDetails(order._id)}>
                               {expandedOrders.includes(order._id) ? 'Hide items' : 'Show items'}
                             </button>

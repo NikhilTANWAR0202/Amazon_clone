@@ -88,6 +88,22 @@ export const updateOrderStatus = async (req,res)=>{
   res.json({ order })
 }
 
+export const updateOrderReturnStatus = async (req,res)=>{
+  const { id } = req.params
+  const { returnStatus } = req.body
+  const allowedReturnStatuses = ['NotRequested', 'Requested', 'Approved', 'Rejected', 'Refunded']
+  if (!allowedReturnStatuses.includes(returnStatus)) {
+    return res.status(400).json({ message: 'Invalid return status' })
+  }
+  const order = await Order.findById(id)
+  if(!order) return res.status(404).json({ message:'Order not found' })
+  order.returnStatus = returnStatus
+  order.returnUpdatedAt = new Date()
+  await order.save()
+  await order.populate('user', 'firstName lastName email')
+  res.json({ order })
+}
+
 export const deleteOrder = async (req,res)=>{
   const { id } = req.params
   const order = await Order.findById(id)
