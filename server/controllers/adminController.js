@@ -14,6 +14,8 @@ export const getStats = async (req, res) => {
   ])
 
   const totalRevenue = totalRevenueResult?.[0]?.totalRevenue || 0
+  const recentOrders = await Order.find().sort('-createdAt').limit(10).populate('user', 'firstName lastName email')
+  const lowStockProducts = await Product.find({ stock: { $lte: 5 } }).sort('stock').limit(10)
 
   res.json({
     stats: {
@@ -23,7 +25,9 @@ export const getStats = async (req, res) => {
       outOfStockProducts,
       pendingOrders,
       deliveredOrders,
-      totalOrders
+      totalOrders,
+      recentOrders,
+      lowStockProducts
     }
   })
 }
@@ -74,7 +78,7 @@ export const getOrderById = async (req,res)=>{
 export const updateOrderStatus = async (req,res)=>{
   const { id } = req.params
   const { status } = req.body
-  const allowedStatuses = ['Processing', 'Packed', 'Shipped', 'Out for Delivery', 'Delivered', 'Cancelled']
+  const allowedStatuses = ['Pending', 'Processing', 'Packed', 'Shipped', 'Out for Delivery', 'Delivered', 'Cancelled']
   if (!allowedStatuses.includes(status)) {
     return res.status(400).json({ message: 'Invalid order status' })
   }
@@ -102,6 +106,24 @@ export const updateOrderReturnStatus = async (req,res)=>{
   await order.save()
   await order.populate('user', 'firstName lastName email')
   res.json({ order })
+}
+
+export const confirmPayment = async (req, res) => {
+  try {
+    const { id } = req.params
+    const { paymentInfo } = req.body
+    const order = await Order.findById(id)
+    if (!order) return res.status(404).json({ message: 'Order not found' })
+    order.paymentStatus = 'Paid'
+    order.paymentInfo = paymentInfo || order.paymentInfo || {}
+    order.paymentConfirmedAt = new Date()
+    await order.save()
+    await order.populate('user', 'firstName lastName email')
+    res.json({ order })
+  } catch (err) {
+    console.error('Confirm payment error', err)
+    res.status(500).json({ message: 'Unable to confirm payment' })
+  }
 }
 
 export const deleteOrder = async (req,res)=>{

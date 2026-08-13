@@ -1,6 +1,8 @@
+import bcrypt from 'bcryptjs'
 import mongoose from 'mongoose'
 import productsData from './data/products.js'
 import Product from './models/Product.js'
+import User from './models/User.js'
 import { inferCategoryFromTitle } from './utils/categoryHelper.js'
 
 const getImageUrl = (value, title) => {
@@ -54,6 +56,19 @@ const run = async () => {
       console.log('inserted', missing.length)
     } else {
       console.log('no missing products inserted')
+    }
+
+    // create default admin user if not exists
+    const adminEmail = process.env.SEED_ADMIN_EMAIL || 'admin@amazonclone.local'
+    const adminPassword = process.env.SEED_ADMIN_PASSWORD || 'Admin@123'
+    const existingAdmin = await User.findOne({ email: adminEmail })
+    if (!existingAdmin) {
+      const hashed = await bcrypt.hash(adminPassword, 10)
+      const adminUser = new User({ firstName: 'Admin', lastName: 'User', email: adminEmail, password: hashed, role: 'admin', emailVerified: true })
+      await adminUser.save()
+      console.log('created admin user', adminEmail)
+    } else {
+      console.log('admin user already exists')
     }
 
     await mongoose.disconnect()

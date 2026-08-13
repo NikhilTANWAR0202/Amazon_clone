@@ -154,8 +154,13 @@ import { uploadToCloudinary } from '../utils/cloudinary.js'
 export const uploadProductImage = async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ message: 'No image file provided' })
-    const result = await uploadToCloudinary(req.file.buffer, { folder: 'amazon-clone/products' })
-    res.json({ url: result.secure_url })
+    // prefer cloudinary if buffer exists, otherwise use local file path
+    if (req.file.buffer) {
+      const result = await uploadToCloudinary(req.file.buffer, { folder: 'amazon-clone/products' })
+      return res.json({ url: result.secure_url })
+    }
+    const localPath = `/uploads/${req.file.filename}`
+    res.json({ url: localPath })
   } catch (err) {
     res.status(500).json({ message: err.message })
   }
@@ -164,11 +169,37 @@ export const uploadProductImage = async (req, res) => {
 export const addProduct = async (req, res) => {
   try {
     const payload = normalizeProduct(req.body)
-    if (req.file) {
-      const uploadResult = await uploadToCloudinary(req.file.buffer, { folder: 'amazon-clone/products' })
-      payload.images = [uploadResult.secure_url]
-      payload.thumbnail = uploadResult.secure_url
-      payload.image = uploadResult.secure_url
+    // handle multiple files
+    if (req.files && req.files.length) {
+      const urls = req.files.map((f) => (f.buffer ? null : `/uploads/${f.filename}`))
+      // if buffers exist (cloudinary) upload them
+      const buffers = req.files.filter((f) => f.buffer)
+      if (buffers.length) {
+        const uploaded = []
+        for (const f of buffers) {
+          const result = await uploadToCloudinary(f.buffer, { folder: 'amazon-clone/products' })
+          uploaded.push(result.secure_url)
+        }
+        payload.images = [...uploaded, ...(urls.filter(Boolean))]
+      } else {
+        payload.images = urls
+      }
+      if (payload.images.length) {
+        payload.thumbnail = payload.images[0]
+        payload.image = payload.images[0]
+      }
+    } else if (req.file) {
+      if (req.file.buffer) {
+        const uploadResult = await uploadToCloudinary(req.file.buffer, { folder: 'amazon-clone/products' })
+        payload.images = [uploadResult.secure_url]
+        payload.thumbnail = uploadResult.secure_url
+        payload.image = uploadResult.secure_url
+      } else if (req.file.path || req.file.filename) {
+        const url = `/uploads/${req.file.filename}`
+        payload.images = [url]
+        payload.thumbnail = url
+        payload.image = url
+      }
     }
     const product = await Product.create(payload)
     res.status(201).json({ product })
@@ -180,11 +211,35 @@ export const addProduct = async (req, res) => {
 export const updateProduct = async (req, res) => {
   try {
     const payload = normalizeProduct(req.body)
-    if (req.file) {
-      const uploadResult = await uploadToCloudinary(req.file.buffer, { folder: 'amazon-clone/products' })
-      payload.images = [uploadResult.secure_url]
-      payload.thumbnail = uploadResult.secure_url
-      payload.image = uploadResult.secure_url
+    if (req.files && req.files.length) {
+      const urls = req.files.map((f) => (f.buffer ? null : `/uploads/${f.filename}`))
+      const buffers = req.files.filter((f) => f.buffer)
+      if (buffers.length) {
+        const uploaded = []
+        for (const f of buffers) {
+          const result = await uploadToCloudinary(f.buffer, { folder: 'amazon-clone/products' })
+          uploaded.push(result.secure_url)
+        }
+        payload.images = [...uploaded, ...(urls.filter(Boolean))]
+      } else {
+        payload.images = urls
+      }
+      if (payload.images.length) {
+        payload.thumbnail = payload.images[0]
+        payload.image = payload.images[0]
+      }
+    } else if (req.file) {
+      if (req.file.buffer) {
+        const uploadResult = await uploadToCloudinary(req.file.buffer, { folder: 'amazon-clone/products' })
+        payload.images = [uploadResult.secure_url]
+        payload.thumbnail = uploadResult.secure_url
+        payload.image = uploadResult.secure_url
+      } else if (req.file.path || req.file.filename) {
+        const url = `/uploads/${req.file.filename}`
+        payload.images = [url]
+        payload.thumbnail = url
+        payload.image = url
+      }
     }
     const product = await Product.findByIdAndUpdate(
       req.params.id,

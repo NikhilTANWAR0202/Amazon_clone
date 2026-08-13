@@ -1,10 +1,9 @@
 import express from 'express'
-import { createRazorpayOrder, verifyRazorpayPayment } from '../controllers/paymentController.js'
-import { protect } from '../middleware/authMiddleware.js'
+import { createOrder, verifyPayment } from '../controllers/paymentController.js'
 
 const router = express.Router()
 
-router.post('/create-order', protect, createRazorpayOrder)
-router.post('/verify', protect, verifyRazorpayPayment)
+router.post('/create-order', createOrder)
+router.post('/verify', verifyPayment)
 
 export default router

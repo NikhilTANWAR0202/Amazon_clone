@@ -17,6 +17,7 @@ const productSchema = new mongoose.Schema(
     numReviews: { type: Number, default: 0, min: 0 },
     stock: { type: Number, default: 0, min: 0 },
     description: { type: String, required: true },
+    discountPercentage: { type: Number, default: 0, min: 0, max: 100 },
     featured: { type: Boolean, default: false },
     isFeatured: { type: Boolean, default: false },
     createdAt: { type: Date, default: Date.now },

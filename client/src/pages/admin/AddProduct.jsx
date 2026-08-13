@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { ProductContext } from "../../context/ProductContext";
 import api from "../../services/api";
 import styles from "./Admin.module.css";
 import Navbar from "./Navbar";
@@ -7,6 +8,7 @@ import Sidebar from "./Sidebar";
 
 function AddProduct() {
   const navigate = useNavigate();
+  const { reloadProducts } = useContext(ProductContext)
 
   const [product, setProduct] = useState({
     name: "",
@@ -17,6 +19,8 @@ function AddProduct() {
     stock: "",
     image: "",
   });
+  const [files, setFiles] = useState([])
+  const [previews, setPreviews] = useState([])
 
   function handleChange(e) {
     setProduct({
@@ -25,22 +29,41 @@ function AddProduct() {
     });
   }
 
+  function handleFileChange(e) {
+    const selected = Array.from(e.target.files || [])
+    setFiles(selected)
+    setPreviews(selected.map((f) => URL.createObjectURL(f)))
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
 
     try {
-      const payload = {
-        name: product.name,
-        brand: product.brand,
-        category: product.category,
-        description: product.description,
-        price: product.price,
-        stock: product.stock,
-        images: product.image ? [product.image] : [],
+      let res
+      if (files.length) {
+        const fd = new FormData()
+        fd.append('name', product.name)
+        fd.append('brand', product.brand)
+        fd.append('category', product.category)
+        fd.append('description', product.description)
+        fd.append('price', product.price)
+        fd.append('stock', product.stock)
+        files.forEach((f) => fd.append('images', f))
+        res = await api.post('/admin/products', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
+      } else {
+        const payload = {
+          name: product.name,
+          brand: product.brand,
+          category: product.category,
+          description: product.description,
+          price: product.price,
+          stock: product.stock,
+          images: product.image ? [product.image] : [],
+        }
+        res = await api.post('/admin/products', payload)
       }
 
-      const res = await api.post('/admin/products', payload)
-
+      if (reloadProducts) await reloadProducts()
       alert(res.data.message || 'Product added successfully')
 
       navigate("/admin/products")
@@ -141,6 +164,15 @@ function AddProduct() {
                     value={product.image}
                     onChange={handleChange}
                   />
+                </div>
+                <div className={styles.formGroup}>
+                  <label>Upload images</label>
+                  <input type="file" accept="image/*" multiple onChange={handleFileChange} />
+                  <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
+                    {previews.map((src, idx) => (
+                      <img key={idx} src={src} alt={`preview-${idx}`} style={{ width: 96, height: 72, objectFit: 'cover', borderRadius: 6 }} />
+                    ))}
+                  </div>
                 </div>
               </div>
 

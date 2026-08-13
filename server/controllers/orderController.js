@@ -113,9 +113,9 @@ export const createOrder = async (req,res)=>{
       discount,
       total,
       paymentMethod: paymentMethodString,
-      paymentStatus: paymentStatus || 'Pending',
-      razorpayOrderId: razorpayOrderId || undefined,
-      razorpayPaymentId: razorpayPaymentId || undefined,
+      paymentStatus: paymentStatus || (paymentInfo?.status || 'Pending'),
+      razorpayOrderId: paymentInfo?.orderId || razorpayOrderId || undefined,
+      razorpayPaymentId: paymentInfo?.paymentId || razorpayPaymentId || undefined,
       orderId
     })
 
@@ -176,5 +176,32 @@ export const requestOrderReturn = async (req,res)=>{
   } catch (error) {
     console.error('Request order return error:', error)
     res.status(500).json({ success: false, message: 'Unable to request return' })
+  }
+}
+
+export const updateOrderStatus = async (req, res) => {
+  try {
+    const { id } = req.params
+    const { status } = req.body
+    const allowedStatuses = ['Pending', 'Processing', 'Packed', 'Shipped', 'Out for Delivery', 'Delivered', 'Cancelled']
+
+    if (!allowedStatuses.includes(status)) {
+      return res.status(400).json({ success: false, message: 'Invalid order status' })
+    }
+
+    const order = await Order.findById(id)
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Order not found' })
+    }
+
+    order.status = status
+    order.statusTimeline = order.statusTimeline || []
+    order.statusTimeline.push({ status, updatedAt: new Date() })
+    await order.save()
+
+    res.json({ success: true, order })
+  } catch (error) {
+    console.error('Update order status error:', error)
+    res.status(500).json({ success: false, message: 'Unable to update order status' })
   }
 }

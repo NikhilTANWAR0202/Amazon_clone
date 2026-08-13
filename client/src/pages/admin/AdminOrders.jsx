@@ -50,7 +50,7 @@ function AdminOrders() {
 
   async function updateStatus(id, status) {
     try {
-      await api.put(`/admin/orders/${id}/status`, { status })
+      await api.patch(`/orders/${id}/status`, { status })
       await fetchOrders()
     } catch (err) {
       console.error(err)
@@ -128,7 +128,8 @@ function AdminOrders() {
                         <td>{order.items?.length ?? 0}</td>
                         <td>
                           <div className={styles.tableActions} style={{ justifyContent: 'flex-end' }}>
-                            <select className={styles.formGroup} value={order.status} onChange={(e) => updateStatus(order._id, e.target.value)}>
+                            <select className={styles.formGroup} value={order.status || 'Pending'} onChange={(e) => updateStatus(order._id, e.target.value)}>
+                              <option value="Pending">Pending</option>
                               <option value="Processing">Processing</option>
                               <option value="Packed">Packed</option>
                               <option value="Shipped">Shipped</option>

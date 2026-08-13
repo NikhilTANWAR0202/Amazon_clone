@@ -32,11 +32,13 @@ export default function OrderTracking() {
     { key: 'Confirmed', label: 'Order confirmed', hours: 2, description: 'Your order has been confirmed.' },
     { key: 'Processing', label: 'Processing', hours: 5, description: 'Your order is being prepared for shipment.' },
     { key: 'Shipped', label: 'Shipped', hours: 8, description: 'Your package has left the warehouse.' },
-    { key: 'Out for delivery', label: 'Out for delivery', hours: 12, description: 'Your order is on the way.' },
+    { key: 'Out for Delivery', label: 'Out for Delivery', hours: 12, description: 'Your order is on the way.' },
     { key: 'Delivered', label: 'Delivered', hours: 16, description: 'Your order is scheduled to be delivered.' }
   ]
 
-  const currentIndex = timeline.findIndex((step) => step.key === order.status)
+  // Find matching timeline step using case-insensitive comparison so different capitalizations
+  // (e.g. "Out for Delivery" vs "Out for delivery") match correctly.
+  const currentIndex = timeline.findIndex((step) => (step.key || '').toLowerCase() === (order.status || '').toLowerCase())
   const statusIndex = currentIndex === -1 ? timeline.findIndex((step) => step.key === 'Shipped') : currentIndex
 
   const formatStageTime = (hours) => {

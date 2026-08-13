@@ -104,6 +104,15 @@ export default function Checkout() {
     setLoading(true)
 
     try {
+      // verify stock for each item before creating order
+      for (const item of orderItems) {
+        const res = await api.get(`/products/${item.productId}`)
+        const prod = res.data.product
+        if (!prod) throw new Error('Product not found: ' + item.title)
+        if ((prod.stock || 0) < item.quantity) {
+          throw new Error(`Not enough stock for ${prod.title || prod.name}: requested ${item.quantity}, available ${prod.stock || 0}`)
+        }
+      }
       await api.post('/orders', {
         items: orderItems,
         address,
@@ -154,6 +163,15 @@ export default function Checkout() {
     setLoading(true)
 
     try {
+      // verify stock for each item before creating order
+      for (const item of orderItems) {
+        const res = await api.get(`/products/${item.productId}`)
+        const prod = res.data.product
+        if (!prod) throw new Error('Product not found: ' + item.title)
+        if ((prod.stock || 0) < item.quantity) {
+          throw new Error(`Not enough stock for ${prod.title || prod.name}: requested ${item.quantity}, available ${prod.stock || 0}`)
+        }
+      }
       await api.post('/orders', {
         items: orderItems,
         address,

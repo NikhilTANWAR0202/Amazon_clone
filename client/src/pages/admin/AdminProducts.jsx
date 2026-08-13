@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useContext, useEffect, useMemo, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { ProductContext } from '../../context/ProductContext'
 import api from '../../services/api'
 import styles from './Admin.module.css'
 import Navbar from './Navbar'
@@ -30,6 +31,7 @@ export default function AdminProducts() {
   const [isEditMode, setIsEditMode] = useState(false)
   const [activeProduct, setActiveProduct] = useState(null)
   const [search, setSearch] = useState('')
+  const { page, totalPages, setPage } = useContext(ProductContext)
 
   useEffect(() => {
     fetchProducts()
@@ -65,6 +67,8 @@ export default function AdminProducts() {
     }
   }
 
+  const navigate = useNavigate()
+
   function openAddProduct() {
     setForm(initialForm)
     setActiveProduct(null)
@@ -73,23 +77,7 @@ export default function AdminProducts() {
   }
 
   function openEditProduct(product) {
-    setActiveProduct(product)
-    setForm({
-      title: product.title || product.name || '',
-      brand: product.brand || '',
-      category: product.category || '',
-      description: product.description || '',
-      price: product.price ?? '',
-      stock: product.stock ?? '',
-      image: product.images?.[0] || product.thumbnail || '',
-      oldPrice: product.oldPrice ?? '',
-      discountPercentage: product.discountPercentage ?? '',
-      prime: product.prime ? 'true' : 'false',
-      deliveryDays: product.deliveryDays ?? '2',
-      returnPolicy: product.returnPolicy || '30-day return policy'
-    })
-    setIsEditMode(true)
-    setIsModalOpen(true)
+    navigate(`/admin/edit-product/${product._id}`)
   }
 
   function handleFormChange(event) {
@@ -210,6 +198,10 @@ export default function AdminProducts() {
               style={{ flex: '1 1 320px', padding: '14px 16px', borderRadius: '14px', border: '1px solid #d1d5db', background: '#fff' }}
             />
 
+            <div className={styles.metaCard}>
+              <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#475569' }}>Total products</div>
+              <div style={{ fontSize: '1.8rem', fontWeight: 700, marginTop: '6px' }}>{products.length}</div>
+            </div>
             <div className={styles.metaCard}>
               <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#475569' }}>Total products</div>
               <div style={{ fontSize: '1.8rem', fontWeight: 700, marginTop: '6px' }}>{products.length}</div>

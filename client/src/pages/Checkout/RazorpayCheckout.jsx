@@ -22,11 +22,31 @@ function RazorpayCheckout({ amount, user, address, onSuccess }) {
       document.body.appendChild(script)
     })
 
+  const isAddressValid = () => {
+    if (!address) return false
+    const requiredFields = [
+      'fullName',
+      'addressLine1',
+      'city',
+      'state',
+      'zip',
+      'phone'
+    ]
+    return requiredFields.every(
+      (field) => typeof address[field] === 'string' && address[field].trim().length > 0
+    )
+  }
+
   const handlePayment = async () => {
     setError('')
 
     if (!amount || Number(amount) <= 0) {
       setError('Invalid payment amount.')
+      return
+    }
+
+    if (!isAddressValid()) {
+      setError('Please fill in all required address fields before paying with Razorpay.')
       return
     }
 
@@ -43,11 +63,17 @@ function RazorpayCheckout({ amount, user, address, onSuccess }) {
       }
 
       // Create order on backend
-      const response = await api.post('/payment/create-order', {
-        amount
-      })
+      const response = await api.post('/payment/create-order', { amount })
+
+console.log('Razorpay response:', response.data)
 
       const { order, key } = response.data
+
+      if (!order || !order.id || !key) {
+        setError('Invalid Razorpay order response. Please try again.')
+        setLoading(false)
+        return
+      }
 
       const options = {
         key,
@@ -71,10 +97,8 @@ function RazorpayCheckout({ amount, user, address, onSuccess }) {
           color: '#0b6e4f'
         },
 
-        // SUCCESS HANDLER
         handler: async (paymentResponse) => {
           try {
-            // Verify payment signature on backend
             const verifyRes = await api.post('/payment/verify', {
               razorpay_order_id: paymentResponse.razorpay_order_id,
               razorpay_payment_id: paymentResponse.razorpay_payment_id,
@@ -82,7 +106,6 @@ function RazorpayCheckout({ amount, user, address, onSuccess }) {
             })
 
             if (verifyRes.data.success) {
-              // Wait for parent success handler
               await onSuccess({
                 paymentId: paymentResponse.razorpay_payment_id,
                 orderId: paymentResponse.razorpay_order_id,
